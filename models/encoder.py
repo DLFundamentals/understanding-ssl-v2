@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torchvision
+import math
 import torchvision.models as models
 
 from typing import Union, Optional
@@ -157,3 +157,86 @@ class ResNetEncoder(BaseEncoder):
             nn.init.zeros_(layer.bias)
         elif isinstance(layer, nn.Linear):
             nn.init.normal_(layer.weight, 0, 0.01)
+
+class ViTEncoder(BaseEncoder):
+    """
+    A wrapper around a Vision Transformer (ViT) model that inherits from BaseEncoder.
+    """
+    def __init__(self, vit_model: nn.Module,
+                 image_size: int = 32,
+                 patch_size: int = 4, # Smaller patch size for CIFAR
+                 layer: str = 'encoder', # Hook into the output of the entire encoder block
+                 **kwargs):
+        """
+        Args:
+            vit_model: The torchvision ViT model instance.
+            image_size: The input image size (e.g., 32 for CIFAR).
+            patch_size: The desired patch size.
+            layer: The name of the module to hook for feature extraction.
+                   'encoder' is a good choice to get the final hidden states.
+        """
+        # 1. Initialize the BaseEncoder first
+        super().__init__(net=vit_model, layer=layer)
+
+        # Store parameters
+        self.image_size = image_size
+        self.patch_size = patch_size
+        self.hidden_dim = vit_model.hidden_dim
+
+        # 2. Overwrite the original patch projection with our custom one
+        # This is the key step to adapt the ViT for different input/patch sizes.
+        self.net.conv_proj = nn.Conv2d(
+            in_channels=3,
+            out_channels=self.hidden_dim,
+            kernel_size=patch_size,
+            stride=patch_size
+        )
+        self._initialize_weights(self.net.conv_proj) # Initialize the new conv layer
+
+        # 3. Re-initialize positional embeddings for the new sequence length
+        self._initialize_vit_encoder()
+
+        # 4. For SSL, we don't need the final classification head
+        self.net.heads = nn.Identity()
+
+
+    def _initialize_vit_encoder(self):
+        """Recalculates and reinitializes the positional embeddings."""
+        num_patches = (self.image_size // self.patch_size) ** 2
+        seq_length = num_patches + 1  # Add 1 for the [CLS] token
+
+        # Re-create the positional embedding parameter with the new size
+        self.net.encoder.pos_embedding = nn.Parameter(
+            torch.empty(1, seq_length, self.hidden_dim).normal_(std=0.02)
+        )
+
+    def _initialize_weights(self, layer: nn.Conv2d):
+        """Initializes the weights of the patch projection layer."""
+        fan_in = layer.in_channels * layer.kernel_size[0] * layer.kernel_size[1]
+        nn.init.trunc_normal_(layer.weight, std=math.sqrt(1 / fan_in))
+        if layer.bias is not None:
+            nn.init.zeros_(layer.bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Performs the forward pass and extracts the [CLS] token embedding.
+        """
+        # 1. Let the BaseEncoder run the full forward pass on the modified ViT.
+        #    The hook will capture the output of the `self.net.encoder` block.
+        #    This output contains all token embeddings (CLS + patches).
+        hidden_representation = super().forward(x)
+
+        # 2. From the output of the encoder, we only need the [CLS] token,
+        #    which is always the first token in the sequence.
+        cls_embedding = hidden_representation[:, 0]
+
+        return cls_embedding
+
+    def interpolate_pos_encoding(self, x: torch.Tensor):
+        """
+        Needed while using pretrained weights.
+        (Implementation can be added here if you need to load ImageNet weights)
+        """
+        # TODO: Implement positional embedding interpolation if fine-tuning
+        # from a model with different resolution.
+        pass
