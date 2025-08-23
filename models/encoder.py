@@ -19,7 +19,6 @@ class BaseEncoder(nn.Module):
         super().__init__()
         self.net = net
         self.layer = layer
-
         self.hidden = None
         self._register_hook()
  
@@ -43,14 +42,12 @@ class BaseEncoder(nn.Module):
         """
         def hook(_, __, output: torch.Tensor) -> None:
             self.hidden = output
-
         layer = self._find_layer()
         assert layer is not None, f'hidden layer ({self.layer}) not found'
         self.hook_handle = layer.register_forward_hook(hook)
 
     def remove_hook(self) -> None:
-        # remove the hook when done
-        
+        # remove the hook when done     
         if self.hook_handle is not None:
             self.hook_handle.remove()
             self.hook_handle = None
@@ -58,8 +55,7 @@ class BaseEncoder(nn.Module):
   
     def forward(self, x) -> torch.Tensor:
         if self.layer == -1:
-            return self.net(x)
-        
+            return self.net(x)       
         _ = self.net(x)
         hidden = self.hidden
         self.hidden = None
@@ -83,27 +79,19 @@ class ResNetEncoder(BaseEncoder):
         """
         
         super().__init__(model, layer)
-        # self.resnet = models.resnet50(pretrained = pretrained)
-        # self.resnet = model
         self.width_multiplier = int(width_multiplier)
         self.pretrained = pretrained
-
         if self.width_multiplier != 1:
             assert not pretrained, 'pretrained weights not available for wider ResNet'
-
         self.create_wider_resnet()
         if dataset == 'cifar' or 'cifar' in dataset or dataset=='svhn':
             self.modify_for_cifar()
-
         # for SSL, we do not need the final fc layer
         self.net.fc = nn.Identity()
-            
-        
 
     def create_wider_resnet(self) -> None:
         if self.width_multiplier == 1:
-            return
-        
+            return   
         # modify the first conv layer
         self.net.conv1 = nn.Conv2d(3, 64 * self.width_multiplier, kernel_size = 7, stride = 2, padding = 3, bias = False)
         self.net.bn1 = nn.BatchNorm2d(64 * self.width_multiplier)
@@ -113,7 +101,6 @@ class ResNetEncoder(BaseEncoder):
             self._initialize_weights(self.net.conv1)
             self._initialize_weights(self.net.bn1)
         
-
         # modify the subsequent layers
         for layer in [self.net.layer1, self.net.layer2, self.net.layer3, self.net.layer4]:
             for bottleneck in layer:
@@ -129,8 +116,6 @@ class ResNetEncoder(BaseEncoder):
                     bottleneck.downsample[0] = self._wider_bottleneck(bottleneck.downsample[0])
                     bottleneck.downsample[1] = nn.BatchNorm2d(bottleneck.downsample[0].out_channels, )
 
-
-
     def _wider_bottleneck(self, conv) -> nn.Conv2d:
         in_channels = conv.in_channels
         out_channels = conv.out_channels
@@ -138,7 +123,6 @@ class ResNetEncoder(BaseEncoder):
         stride = conv.stride
         padding = conv.padding
         bias = conv.bias is not None
-
         widened_conv = nn.Conv2d(in_channels * self.width_multiplier,
                                  out_channels * self.width_multiplier,
                                  kernel_size = kernel_size,
@@ -152,14 +136,12 @@ class ResNetEncoder(BaseEncoder):
         
         # delete conv to save memory
         del conv
-        
         return widened_conv
         
 
     def modify_for_cifar(self) -> None:
         # replace the first conv layer to adapt to CIFAR
         self.net.conv1 = nn.Conv2d(3, 64 * self.width_multiplier, kernel_size = 3, stride = 1, padding = 1, bias = False)
-
         # remove the first max pooling operation
         self.net.maxpool = nn.Identity()
 
