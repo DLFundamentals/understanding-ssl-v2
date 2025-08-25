@@ -1,6 +1,6 @@
 experiment_name: "simclr/cifar10"
-
 method_type: "simclr"
+supervision: "DCL"
 
 dataset:
   name: "cifar10"
@@ -9,31 +9,30 @@ dataset:
 
 training:
   batch_size: 1024
-  num_epochs: 1000
+  num_epochs: 2501
   lr: 0.3
   augmentations_type: "cifar"
   augment_both: True
-  save_every: 10
+  save_every: 100
+  log_every: 10
   track_performance: True
-  multi_gpu: True
-  world_size: 2
-  pretrained: True
+  multi_gpu: False
+  world_size: 1
 
 model:
   encoder_type: "resnet50"
-  pretrained: True
-  width_multiplier: 2
+  pretrained: False
+  width_multiplier: 1
   hidden_dim: 2048
   projection_dim: 64
-  ckpt_path: "/home/luthra/understanding-ssl/experiments/simclr/cifar10/snapshot.pth"
 
 loss:
   temperature: 0.5
 
 evaluation:
-  K: [5, 10, 20]
-  checkpoints_dir: "experiments/simclr/cifar10/checkpoints/"
-  perform_knn: False
+  checkpoints_dir: "checkpoints/cifar10_parallel/"
+  perform_rsa: False
+  perform_cka: False
   perform_cdnv: True
   perform_nccc: True
   perform_linear: False
@@ -41,7 +40,7 @@ evaluation:
 
 linear:
   batch_size: 256
-  num_epochs: 200
+  num_epochs: 100
   num_output_classes: 10
   augment_both: False
   top_lr: 3e-4
@@ -49,4 +48,3 @@ linear:
   weight_decay: 5e-4
   track_performance: True
   save_every: 10
-  
