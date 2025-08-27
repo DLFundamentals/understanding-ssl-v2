@@ -10,6 +10,7 @@ Arguments can be found here:
 https://github.com/pytorch/pytorch/blob/bbe803cb35948df77b46a2d38372910c96693dcd/torch/distributed/run.py#L401
 """
 import torch
+import torch.nn as nn
 import torchvision
 import torchvision.models as models
 from torch.utils.data import DataLoader
@@ -35,7 +36,7 @@ from eval_utils.feature_extractor import FeatureExtractor
 from eval_utils.nccc_utils import NCCCEvaluator
 from eval_utils.geometry import GeometricEvaluator
 from eval_utils.similarity_metrics import CenteredKernelAlignment, RepresentationSimilarityAnalysis
-from utils.losses import NTXentLoss, WeakNTXentLoss, ContrastiveLoss
+from utils.losses import NTXentLoss, DecoupledNTXentLoss, NegSupConLoss, SupConLoss
 from utils.optimizer import LARS
 
 # model
@@ -46,6 +47,7 @@ import yaml
 from copy import deepcopy
 from tqdm import tqdm
 from collections import namedtuple, defaultdict
+from typing import Literal
 
 # # set seed
 # torch.manual_seed(123)
@@ -68,11 +70,15 @@ def cleanup():
 class ParallelTrainer:
     def __init__(
             self,
-            ssl_model: torch.nn.Module,
+            dcl_model: torch.nn.Module,
             nscl_model: torch.nn.Module,
+            scl_model: torch.nn.Module,
+            # ce_model: torch.nn.Module,
             train_loader: torch.utils.data.DataLoader,
             criterion1: torch.nn.Module,
             criterion2: torch.nn.Module,
+            criterion3: torch.nn.Module,
+            # criterion4: torch.nn.Module,
             save_every: int,
             log_every: int,
             snapshot_dir: str,
@@ -84,12 +90,16 @@ class ParallelTrainer:
         torch.cuda.manual_seed(123)
 
         self.gpu_id = int(os.environ["LOCAL_RANK"])
-        self.ssl_model = ssl_model.to(f'cuda:{self.gpu_id}')
+        self.dcl_model = dcl_model.to(f'cuda:{self.gpu_id}')
         self.nscl_model = nscl_model.to(f'cuda:{self.gpu_id}')
+        self.scl_model = scl_model.to(f'cuda:{self.gpu_id}')
+        # self.ce_model = ce_model.to(f'cuda:{self.gpu_id}')
         self.train_loader = train_loader
         self.test_loader = kwargs.get("test_loader", None)
         self.criterion1 = criterion1
         self.criterion2 = criterion2
+        self.criterion3 = criterion3
+        # self.criterion4 = criterion4
         self.save_every = save_every
         self.log_every = log_every
         self.epochs_run = 0
@@ -97,14 +107,18 @@ class ParallelTrainer:
         # if os.path.exists(self.snapshot_dir):
             # TODO
 
-        self.ssl_model = DDP(self.ssl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
+        self.dcl_model = DDP(self.dcl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
         self.nscl_model = DDP(self.nscl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
+        self.scl_model = DDP(self.scl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
+        # self.ce_model = DDP(self.ce_model, device_ids=[self.gpu_id], find_unused_parameters=True)
 
         # optimizer and scheduler
         effective_lr = kwargs.get("effective_lr", 0.1)
         total_epochs = kwargs.get("total_epochs", 100)
-        self.optimizer1, self.scheduler1 = self._configure_optimizers(self.ssl_model, effective_lr, total_epochs)
+        self.optimizer1, self.scheduler1 = self._configure_optimizers(self.dcl_model, effective_lr, total_epochs)
         self.optimizer2, self.scheduler2 = self._configure_optimizers(self.nscl_model, effective_lr, total_epochs)
+        self.optimizer3, self.scheduler3 = self._configure_optimizers(self.scl_model, effective_lr, total_epochs)
+        # self.optimizer4, self.scheduler4 = self._configure_optimizers(self.ce_model, effective_lr, total_epochs)
         # if os.path.exists(self.snapshot_dir):
             # TODO
         #     print(f"Loaded optimizer and scheduler from {self.snapshot_dir}")
@@ -120,6 +134,8 @@ class ParallelTrainer:
         # mixed precision training
         self.scaler1 = GradScaler()
         self.scaler2 = GradScaler()
+        self.scaler3 = GradScaler()
+        # self.scaler4 = GradScaler()
 
     def _configure_optimizers(self, model, effective_lr,
                              total_epochs, warmup_epochs = 10):
@@ -166,27 +182,16 @@ class ParallelTrainer:
         self.optimizer.load_state_dict(snapshot["OPTIMIZER"])
         self.scheduler.load_state_dict(snapshot["SCHEDULER"])
     
-    def _save_ssl_snapshot(self, snapshot_dir: str, epoch: int) -> None:
+    def _save_snapshot(self, model: nn.Module, epoch: int, 
+                       optimizer, scheduler,
+                       supervision: Literal["dcl", "nscl", "scl", "ce"]) -> None:
         snapshot = {
-            "MODEL_STATE": self.ssl_model.module.state_dict(),
+            "MODEL_STATE": model.module.state_dict(),
             "EPOCHS_RUN": epoch,
-            "OPTIMIZER": self.optimizer1.state_dict(),
-            "SCHEDULER": self.scheduler1.state_dict()
+            "OPTIMIZER": optimizer.state_dict(),
+            "SCHEDULER": scheduler.state_dict()
         }
-        snapshot_dir = f'{snapshot_dir}/dcl'
-        os.makedirs(snapshot_dir, exist_ok=True)
-        snapshot_path = os.path.join(snapshot_dir, f"snapshot_{epoch}.pth")
-        torch.save(snapshot, snapshot_path)
-        print(f"Saved model to {snapshot_path} at epoch {epoch}")
-
-    def _save_nscl_snapshot(self, snapshot_dir: str, epoch: int) -> None:
-        snapshot = {
-            "MODEL_STATE": self.nscl_model.module.state_dict(),
-            "EPOCHS_RUN": epoch,
-            "OPTIMIZER": self.optimizer2.state_dict(),
-            "SCHEDULER": self.scheduler2.state_dict()
-        }
-        snapshot_dir = f'{snapshot_dir}/nscl'
+        snapshot_dir = f'{self.snapshot_dir}/{supervision}'
         os.makedirs(snapshot_dir, exist_ok=True)
         snapshot_path = os.path.join(snapshot_dir, f"snapshot_{epoch}.pth")
         torch.save(snapshot, snapshot_path)
@@ -204,11 +209,13 @@ class ParallelTrainer:
 
         loss1_per_epoch = 0.0
         loss2_per_epoch = 0.0
+        loss3_per_epoch = 0.0
+        loss4_per_epoch = 0.0
         for i, batch in enumerate(tqdm(self.train_loader)):
             self.optimizer1.zero_grad()
             # enable mixed precision training
             with autocast(device_type='cuda'):
-              loss1 = self.ssl_model.module.run_one_batch(batch,
+              loss1 = self.dcl_model.module.run_one_batch(batch,
                                                 self.criterion1,
                                                 self.gpu_id)
             loss1_per_epoch += loss1.item()
@@ -217,7 +224,7 @@ class ParallelTrainer:
             # torch.cuda.synchronize()
             self.scaler1.unscale_(self.optimizer1)  # Unscale gradients before clipping
             #clip model gradients
-            clip_grad_norm_(self.ssl_model.parameters(), max_norm=1.0)
+            clip_grad_norm_(self.dcl_model.parameters(), max_norm=1.0)
             self.scaler1.step(self.optimizer1)         
             self.scaler1.update()
             torch.cuda.synchronize()
@@ -239,46 +246,90 @@ class ParallelTrainer:
             self.scaler2.update()
             torch.cuda.synchronize()
             del loss2
-            # torch.cuda.empty_cache()
+
+            # repeat the steps for scl model
+            self.optimizer3.zero_grad()
+            with autocast(device_type='cuda'):
+                loss3 = self.scl_model.module.run_one_batch(batch,
+                                                            self.criterion3, 
+                                                            self.gpu_id)
+            loss3_per_epoch += loss3.item()
+            self.scaler3.scale(loss3).backward()
+            self.scaler3.unscale_(self.optimizer3)
+            clip_grad_norm_(self.scl_model.parameters(), max_norm=1.0)
+            self.scaler3.step(self.optimizer3)
+            self.scaler3.update()
+            torch.cuda.synchronize()
+            del loss3
+
+            # # repeat the steps for ce model
+            # self.optimizer4.zero_grad()
+            # with autocast(device_type='cuda'):
+            #     loss4 = self.ce_model.module.run_one_batch(batch,
+            #                                                self.criterion4, 
+            #                                                self.gpu_id)
+            # loss4_per_epoch += loss4.item()
+            # self.scaler4.scale(loss4).backward()
+            # self.scaler4.unscale_(self.optimizer4)
+            # clip_grad_norm_(self.scl_model.parameters(), max_norm=1.0)
+            # self.scaler4.step(self.optimizer4)
+            # self.scaler4.update()
+            # torch.cuda.synchronize()
+            # del loss4
 
             if epoch == 0:
                 print(f"🧮 Accumulative batch loss at batch idx {i} for DCL model: {loss1_per_epoch}")
                 print(f"🧮 Accumulative batch loss at batch idx {i} for NSCL model: {loss2_per_epoch}")
+                print(f"🧮 Accumulative batch loss at batch idx {i} for SCL model: {loss3_per_epoch}")
+                print(f"🧮 Accumulative batch loss at batch idx {i} for CE model: {loss4_per_epoch}")
 
         
         # update learning rate
         self.scheduler1.step()
         self.scheduler2.step()
+        self.scheduler3.step()
+        # self.scheduler4.step()
 
-        return loss1_per_epoch / len(self.train_loader), loss2_per_epoch / len(self.train_loader)
+        return (loss1_per_epoch / len(self.train_loader), loss2_per_epoch / len(self.train_loader),
+                loss3_per_epoch / len(self.train_loader), loss4_per_epoch / len(self.train_loader))
 
     def train(self, max_epochs: int) -> None:
-        self.ssl_model.train()
+        self.dcl_model.train()
         self.nscl_model.train()
-        ssl_loss_per_epoch = 0.0
+        self.scl_model.train()
+        # self.ce_model.train()
+        dcl_loss_per_epoch = 0.0
         nscl_loss_per_epoch = 0.0
+        scl_loss_per_epoch = 0.0
+        # ce_loss_per_epoch = 0.0
  
         for epoch in range(self.epochs_run, max_epochs):
             # run one epoch
-            ssl_loss_per_epoch, nscl_loss_per_epoch = self._run_epoch(epoch)
+            dcl_loss_per_epoch, nscl_loss_per_epoch, scl_loss_per_epoch, ce_loss_per_epoch = self._run_epoch(epoch)
             # On GPU 0 do extra logging, snapshot saving, and evaluation
             if self.gpu_id == 0:
                 # Save a snapshot
                 if epoch % self.save_every == 0 or (epoch < 100 and epoch % 10 == 0):
-                    self._save_ssl_snapshot(self.snapshot_dir, epoch)
-                    self._save_nscl_snapshot(self.snapshot_dir, epoch)
+                    self._save_snapshot(self.dcl_model, epoch, self.optimizer1, self.scheduler1, supervision='dcl')
+                    self._save_snapshot(self.nscl_model, epoch, self.optimizer2, self.scheduler2, supervision='nscl')
+                    self._save_snapshot(self.scl_model, epoch, self.optimizer3, self.scheduler3, supervision='scl')
+                    # self._save_snapshot(self.ce_model, epoch, self.optimizer4, self.scheduler4, supervision='ce')
                     print(f"Saved model at epoch {epoch}")
 
                 # Evaluate and log performance every self.save_every epochs
                 if epoch % self.log_every == 0:
-                    print(f"SSL Loss per epoch: {ssl_loss_per_epoch}")
+                    print(f"SSL Loss per epoch: {dcl_loss_per_epoch}")
                     print(f"NSCL Loss per epoch: {nscl_loss_per_epoch}")
+                    print(f"SCL Loss per epoch: {scl_loss_per_epoch}")
+                    # print(f"CE Loss per epoch: {ce_loss_per_epoch}")
                     if self.track_performance:
                         with torch.no_grad():
-                            ssl_eval_outputs, nscl_eval_outputs = self._run_evaluation()
-                        ssl_eval_outputs['Loss'] = ssl_loss_per_epoch
+                            dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs = self._run_evaluation()
+                        dcl_eval_outputs['Loss'] = dcl_loss_per_epoch
                         nscl_eval_outputs['Loss'] = nscl_loss_per_epoch
-                        self.log_metrics(ssl_eval_outputs, nscl_eval_outputs, epoch)
+                        scl_eval_outputs['Loss'] = scl_loss_per_epoch
+                        # ce_eval_outputs['Loss'] = ce_loss_per_epoch
+                        self.log_metrics(dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs, epoch)
 
             # Optionally, if using distributed training, you might call a barrier here:
             if dist.get_world_size() > 1:
@@ -288,17 +339,26 @@ class ParallelTrainer:
 
     def _run_evaluation(self):
         # Evaluate SSL Model
-        self.ssl_model.eval()
-        ssl_eval_outputs = self._evaluate_single_model(self.ssl_model)
+        self.dcl_model.eval()
+        dcl_eval_outputs = self._evaluate_single_model(self.dcl_model)
         # Evaluate NSCL Model
         self.nscl_model.eval()
         nscl_eval_outputs = self._evaluate_single_model(self.nscl_model)
+        # Evaluate SCL Model
+        self.scl_model.eval()
+        scl_eval_outputs = self._evaluate_single_model(self.scl_model)
+        # # Evaluate CE Model
+        # self.ce_model.eval()
+        # ce_eval_outputs = self._evaluate_single_model(self.ce_model)
+        ce_eval_outputs = None # TODO
 
         # set models back to training mode
-        self.ssl_model.train()
+        self.dcl_model.train()
         self.nscl_model.train()
+        self.scl_model.train()
+        # self.ce_model.train()
 
-        return ssl_eval_outputs, nscl_eval_outputs
+        return dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs
 
     @torch.no_grad
     def _evaluate_single_model(self, model: torch.nn.Module):
@@ -337,15 +397,14 @@ class ParallelTrainer:
             pass # TODO
         if self.perform_cka:
             pass # TODO
-
         return eval_outputs
     
-    def log_metrics(self, ssl_eval_outputs, nscl_eval_outputs, cur_epoch):
+    def log_metrics(self, dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs, cur_epoch):
         # define epoch as x-axis
         if not self.wandb_defined:
             wandb.define_metric("epoch")
             wandb.define_metric("learning_rate", step_metric="epoch")
-            for model_prefix in ["ssl", "nscl"]:
+            for model_prefix in ["dcl", "nscl", "scl", "ce"]:
                 wandb.define_metric(f"{model_prefix}_loss", step_metric="epoch")
                 wandb.define_metric(f"{model_prefix}_nccc", step_metric="epoch")
                 wandb.define_metric(f"{model_prefix}_cdnv", step_metric="epoch")
@@ -357,22 +416,27 @@ class ParallelTrainer:
         # collect all logs in one dictionary
         log_data = {
                 "epoch": cur_epoch,
-                "ssl_loss": ssl_eval_outputs['Loss'],
-                "nscl_loss": nscl_eval_outputs['Loss'],
                 "learning_rate": self.optimizer1.param_groups[0]["lr"]
                 }
-        if self.perform_nccc:
-            log_data["ssl_nccc"] = ssl_eval_outputs["NCCC"]
-            log_data["nscl_nccc"] = nscl_eval_outputs["NCCC"]
-        if self.perform_cdnv:
-            log_data["ssl_d_cdnv"] = torch.log10(torch.tensor(ssl_eval_outputs["d-CDNV"]))
-            log_data["ssl_cdnv"] = torch.log10(torch.tensor(ssl_eval_outputs["CDNV"]))
-            log_data["nscl_cdnv"] = torch.log10(torch.tensor(nscl_eval_outputs["CDNV"]))
-            log_data["nscl_d_cdnv"] = torch.log10(torch.tensor(nscl_eval_outputs["d-CDNV"]))
-        if self.perform_rsa:
-            pass # TODO
-        if self.perform_cka:
-            pass # TODO
+        
+        # create eval_outputs_map
+        eval_outputs_map = {
+            "dcl": dcl_eval_outputs,
+            "nscl": nscl_eval_outputs,
+            "scl": scl_eval_outputs,
+            # "ce": ce_eval_outputs
+        }
+        for model_prefix, eval_outputs in eval_outputs_map.items():
+            log_data[f"{model_prefix}_loss"] = eval_outputs['Loss']
+            if self.perform_nccc:
+                log_data[f"{model_prefix}_nccc"] = eval_outputs["NCCC"]
+            if self.perform_cdnv:
+                log_data[f"{model_prefix}_cdnv"] = torch.log10(torch.tensor(eval_outputs["CDNV"]))
+                log_data[f"{model_prefix}_d_cdnv"] = torch.log10(torch.tensor(eval_outputs["d-CDNV"]))
+            if self.perform_rsa:
+                pass # TODO
+            if self.perform_cka:
+                pass # TODO
         # log all metrics
         wandb.log(log_data)
 
@@ -435,7 +499,6 @@ if __name__ == "__main__":
     print(f"Local rank: {os.environ.get('LOCAL_RANK')}, World size: {os.environ.get('WORLD_SIZE')}")
 
     if dist.get_rank() == 0 and track_performance:
-        # wandb init
         wandb.init(
             project = "understanding_ssl_v2",
             config = {
@@ -456,20 +519,17 @@ if __name__ == "__main__":
     # load dataset
     world_size = int(os.environ.get('WORLD_SIZE'))
     print(f"Dataset: {dataset_name}")
-
     _, train_loader, _, test_loader, _, _ = get_dataset(dataset_name=dataset_name, 
                                     dataset_path=dataset_path,
                                     augment_both_views=augment_both,
                                     batch_size=batch_size, multi_gpu=multi_gpu,
                                     world_size=world_size, supervision='SCL', # sample with NSCL strategies
                                     test=True)
-
-
     # define model
     if encoder_type == 'resnet50':
-        encoder1 = torchvision.models.resnet50(weights=None)
+        encoder = torchvision.models.resnet50(weights=None)
     elif encoder_type == 'vit_b':
-        encoder1 = models.VisionTransformer(
+        encoder = models.VisionTransformer(
             patch_size=16 if 'imagenet' in dataset_name else 4,
             image_size=224 if 'imagenet' in dataset_name else 32,
             num_layers=12,
@@ -481,7 +541,7 @@ if __name__ == "__main__":
         raise NotImplementedError(f"{encoder_type} not implemented")
     
     if method_type == 'simclr':
-        ssl_model = SimCLR(model=encoder1,
+        dcl_model = SimCLR(model=encoder,
                            dataset=dataset_name,
                            width_multiplier=width_multiplier,
                            hidden_dim=hidden_dim,
@@ -494,39 +554,49 @@ if __name__ == "__main__":
                            token_hidden_dim = 768 if 'imagenet' in dataset_name else 384,
                            mlp_dim = 3072 if 'imagenet' in dataset_name else 1536,
                            )
-        nscl_model = deepcopy(ssl_model)
+        nscl_model = deepcopy(dcl_model)
         nscl_model.encoder.remove_hook()
         nscl_model.encoder._register_hook()
+        scl_model = deepcopy(dcl_model)
+        scl_model.encoder.remove_hook()
+        scl_model.encoder._register_hook()
     else:
         raise NotImplementedError(f"{method_type} not implemented")
 
     # convert all BatchNorm layers to SyncBatchNorm
-    ssl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(ssl_model)
+    dcl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(dcl_model)
     nscl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(nscl_model)
+    scl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(scl_model)
     # dist.barrier() # wait for all processes to catch up
 
     # define loss & optimizer
     if supervision == 'DCL':
         print("Using Decoupled Contrastive Learning")
-        criterion1 = NTXentLoss(temperature, device) 
+        criterion1 = DecoupledNTXentLoss(temperature, device) 
     elif supervision == 'CL':
         print("Using Contrastive Learning")
-        criterion1 = ContrastiveLoss(temperature, device)
+        criterion1 = NTXentLoss(temperature, device)
     else:
         raise NotImplementedError(f"{supervision} not implemented")
     
-    print("Using Weakly-Supervised Contrastive Learning")
-    criterion2 = WeakNTXentLoss(temperature, device)
+    print("Using Negatives-only Supervised Contrastive Learning")
+    criterion2 = NegSupConLoss(temperature, device)
+    print("Using Supervised Contrastive Learning")
+    criterion3 = SupConLoss(temperature, device)
+    # criterion4 = nn.CrossEntropyLoss(reduction='mean')
     effective_lr = lr*world_size*(batch_size//256)
     # train model
-    # breakpoint()
     trainer = ParallelTrainer(
-        ssl_model=ssl_model,
+        dcl_model=dcl_model,
         nscl_model=nscl_model,
+        scl_model=scl_model,
+        # ce_model=ce_model,
         train_loader=train_loader,
         test_loader=test_loader,
         criterion1=criterion1,
         criterion2=criterion2,
+        criterion3=criterion3,
+        # criterion4=criterion4,
         save_every=save_every,
         log_every=log_every,
         snapshot_dir=checkpoints_dir,
@@ -537,7 +607,6 @@ if __name__ == "__main__":
         perform_nccc = perform_nccc,
         total_epochs = epochs
     )
-    
+    # breakpoint()
     trainer.train(epochs)
-
     dist.destroy_process_group()
