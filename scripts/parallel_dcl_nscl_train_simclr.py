@@ -36,7 +36,7 @@ from eval_utils.feature_extractor import FeatureExtractor
 from eval_utils.nccc_utils import NCCCEvaluator
 from eval_utils.geometry import GeometricEvaluator
 from eval_utils.similarity_metrics import CenteredKernelAlignment, RepresentationSimilarityAnalysis
-
+from utils.losses import NTXentLoss, DecoupledNTXentLoss, NegSupConLoss, SupConLoss, HybridSupConLoss
 from utils.optimizer import LARS
 
 # model
@@ -92,7 +92,7 @@ class ParallelTrainer:
         self.log_every = log_every
         self.epochs_run = 0
         self.snapshot_dir = snapshot_dir
-
+        
         self.models_config = models_config
 
         self.track_performance = kwargs.get("track_performance", False)
@@ -193,8 +193,7 @@ class ParallelTrainer:
                             eval_outputs[name]['Loss'] = loss
                         
                         self.log_metrics(eval_outputs, epoch)
-
-            # Barrier for distributed training
+                        
             if dist.get_world_size() > 1:
                 dist.barrier()
 
@@ -258,7 +257,6 @@ class ParallelTrainer:
             for model_name in self.models_config.keys():
                 for metric in ["loss", "nccc", "cdnv", "d_cdnv", "rsa", "cka"]:
                     wandb.define_metric(f"{model_name}_{metric}", step_metric="epoch")
-            
             self.wandb_defined = True
 
         # Collect all logs
