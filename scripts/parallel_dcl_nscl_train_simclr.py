@@ -36,7 +36,7 @@ from eval_utils.feature_extractor import FeatureExtractor
 from eval_utils.nccc_utils import NCCCEvaluator
 from eval_utils.geometry import GeometricEvaluator
 from eval_utils.similarity_metrics import CenteredKernelAlignment, RepresentationSimilarityAnalysis
-from utils.losses import NTXentLoss, DecoupledNTXentLoss, NegSupConLoss, SupConLoss
+from utils.losses import NTXentLoss, DecoupledNTXentLoss, NegSupConLoss, SupConLoss, HybridSupConLoss
 from utils.optimizer import LARS
 
 # model
@@ -73,12 +73,14 @@ class ParallelTrainer:
             dcl_model: torch.nn.Module,
             nscl_model: torch.nn.Module,
             scl_model: torch.nn.Module,
+            hscl_model: torch.nn.Module,
             # ce_model: torch.nn.Module,
             train_loader: torch.utils.data.DataLoader,
             criterion1: torch.nn.Module,
             criterion2: torch.nn.Module,
             criterion3: torch.nn.Module,
-            # criterion4: torch.nn.Module,
+            criterion4: torch.nn.Module,
+            # criterion5: torch.nn.Module,
             save_every: int,
             log_every: int,
             snapshot_dir: str,
@@ -93,13 +95,15 @@ class ParallelTrainer:
         self.dcl_model = dcl_model.to(f'cuda:{self.gpu_id}')
         self.nscl_model = nscl_model.to(f'cuda:{self.gpu_id}')
         self.scl_model = scl_model.to(f'cuda:{self.gpu_id}')
+        self.hscl_model = hscl_model.to(f'cuda:{self.gpu_id}')
         # self.ce_model = ce_model.to(f'cuda:{self.gpu_id}')
         self.train_loader = train_loader
         self.test_loader = kwargs.get("test_loader", None)
         self.criterion1 = criterion1
         self.criterion2 = criterion2
         self.criterion3 = criterion3
-        # self.criterion4 = criterion4
+        self.criterion4 = criterion4
+        # self.criterion5 = criterion5
         self.save_every = save_every
         self.log_every = log_every
         self.epochs_run = 0
@@ -110,6 +114,7 @@ class ParallelTrainer:
         self.dcl_model = DDP(self.dcl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
         self.nscl_model = DDP(self.nscl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
         self.scl_model = DDP(self.scl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
+        self.hscl_model = DDP(self.hscl_model, device_ids=[self.gpu_id], find_unused_parameters=True)
         # self.ce_model = DDP(self.ce_model, device_ids=[self.gpu_id], find_unused_parameters=True)
 
         # optimizer and scheduler
@@ -118,7 +123,8 @@ class ParallelTrainer:
         self.optimizer1, self.scheduler1 = self._configure_optimizers(self.dcl_model, effective_lr, total_epochs)
         self.optimizer2, self.scheduler2 = self._configure_optimizers(self.nscl_model, effective_lr, total_epochs)
         self.optimizer3, self.scheduler3 = self._configure_optimizers(self.scl_model, effective_lr, total_epochs)
-        # self.optimizer4, self.scheduler4 = self._configure_optimizers(self.ce_model, effective_lr, total_epochs)
+        self.optimizer4, self.scheduler4 = self._configure_optimizers(self.ce_model, effective_lr, total_epochs)
+        # self.optimizer5, self.scheduler5 = self._configure_optimizers(self.ce_model, effective_lr, total_epochs)
         # if os.path.exists(self.snapshot_dir):
             # TODO
         #     print(f"Loaded optimizer and scheduler from {self.snapshot_dir}")
@@ -135,7 +141,8 @@ class ParallelTrainer:
         self.scaler1 = GradScaler()
         self.scaler2 = GradScaler()
         self.scaler3 = GradScaler()
-        # self.scaler4 = GradScaler()
+        self.scaler4 = GradScaler()
+        # self.scaler5 = GradScaler()
 
     def _configure_optimizers(self, model, effective_lr,
                              total_epochs, warmup_epochs = 10):
@@ -184,7 +191,7 @@ class ParallelTrainer:
     
     def _save_snapshot(self, model: nn.Module, epoch: int, 
                        optimizer, scheduler,
-                       supervision: Literal["dcl", "nscl", "scl", "ce"]) -> None:
+                       supervision: Literal["dcl", "nscl", "scl", "hscl", "ce"]) -> None:
         snapshot = {
             "MODEL_STATE": model.module.state_dict(),
             "EPOCHS_RUN": epoch,
@@ -211,6 +218,7 @@ class ParallelTrainer:
         loss2_per_epoch = 0.0
         loss3_per_epoch = 0.0
         loss4_per_epoch = 0.0
+        loss5_per_epoch = 0.0
         for i, batch in enumerate(tqdm(self.train_loader)):
             self.optimizer1.zero_grad()
             # enable mixed precision training
@@ -262,6 +270,21 @@ class ParallelTrainer:
             torch.cuda.synchronize()
             del loss3
 
+            # repeat the steps for hscl model
+            self.optimizer4.zero_grad()
+            with autocast(device_type='cuda'):
+                loss4 = self.hscl_model.module.run_one_batch(batch,
+                                                           self.criterion4, 
+                                                           self.gpu_id)
+            loss4_per_epoch += loss4.item()
+            self.scaler4.scale(loss4).backward()
+            self.scaler4.unscale_(self.optimizer4)
+            clip_grad_norm_(self.hscl_model.parameters(), max_norm=1.0)
+            self.scaler4.step(self.optimizer4)
+            self.scaler4.update()
+            torch.cuda.synchronize()
+            del loss4
+
             # # repeat the steps for ce model
             # self.optimizer4.zero_grad()
             # with autocast(device_type='cuda'):
@@ -281,31 +304,36 @@ class ParallelTrainer:
                 print(f"🧮 Accumulative batch loss at batch idx {i} for DCL model: {loss1_per_epoch}")
                 print(f"🧮 Accumulative batch loss at batch idx {i} for NSCL model: {loss2_per_epoch}")
                 print(f"🧮 Accumulative batch loss at batch idx {i} for SCL model: {loss3_per_epoch}")
-                print(f"🧮 Accumulative batch loss at batch idx {i} for CE model: {loss4_per_epoch}")
+                print(f"🧮 Accumulative batch loss at batch idx {i} for HSCL model: {loss4_per_epoch}")
+                # print(f"🧮 Accumulative batch loss at batch idx {i} for CE model: {loss5_per_epoch}")
 
         
         # update learning rate
         self.scheduler1.step()
         self.scheduler2.step()
         self.scheduler3.step()
-        # self.scheduler4.step()
+        self.scheduler4.step()
+        # self.scheduler5.step()
 
         return (loss1_per_epoch / len(self.train_loader), loss2_per_epoch / len(self.train_loader),
-                loss3_per_epoch / len(self.train_loader), loss4_per_epoch / len(self.train_loader))
+                loss3_per_epoch / len(self.train_loader), loss4_per_epoch / len(self.train_loader),
+                loss5_per_epoch / len(self.train_loader))
 
     def train(self, max_epochs: int) -> None:
         self.dcl_model.train()
         self.nscl_model.train()
         self.scl_model.train()
+        self.hscl_model.train()
         # self.ce_model.train()
         dcl_loss_per_epoch = 0.0
         nscl_loss_per_epoch = 0.0
         scl_loss_per_epoch = 0.0
+        hscl_loss_per_epoch = 0.0
         # ce_loss_per_epoch = 0.0
  
         for epoch in range(self.epochs_run, max_epochs):
             # run one epoch
-            dcl_loss_per_epoch, nscl_loss_per_epoch, scl_loss_per_epoch, ce_loss_per_epoch = self._run_epoch(epoch)
+            dcl_loss_per_epoch, nscl_loss_per_epoch, scl_loss_per_epoch, hscl_loss_per_epoch, ce_loss_per_epoch = self._run_epoch(epoch)
             # On GPU 0 do extra logging, snapshot saving, and evaluation
             if self.gpu_id == 0:
                 # Save a snapshot
@@ -313,6 +341,7 @@ class ParallelTrainer:
                     self._save_snapshot(self.dcl_model, epoch, self.optimizer1, self.scheduler1, supervision='dcl')
                     self._save_snapshot(self.nscl_model, epoch, self.optimizer2, self.scheduler2, supervision='nscl')
                     self._save_snapshot(self.scl_model, epoch, self.optimizer3, self.scheduler3, supervision='scl')
+                    self._save_snapshot(self.hscl_model, epoch, self.optimizer4, self.scheduler4, supervision='hscl')
                     # self._save_snapshot(self.ce_model, epoch, self.optimizer4, self.scheduler4, supervision='ce')
                     print(f"Saved model at epoch {epoch}")
 
@@ -321,15 +350,17 @@ class ParallelTrainer:
                     print(f"SSL Loss per epoch: {dcl_loss_per_epoch}")
                     print(f"NSCL Loss per epoch: {nscl_loss_per_epoch}")
                     print(f"SCL Loss per epoch: {scl_loss_per_epoch}")
+                    print(f"HSCL Loss per epoch: {hscl_loss_per_epoch}")
                     # print(f"CE Loss per epoch: {ce_loss_per_epoch}")
                     if self.track_performance:
                         with torch.no_grad():
-                            dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs = self._run_evaluation()
+                            dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, hscl_eval_outputs, ce_eval_outputs = self._run_evaluation()
                         dcl_eval_outputs['Loss'] = dcl_loss_per_epoch
                         nscl_eval_outputs['Loss'] = nscl_loss_per_epoch
                         scl_eval_outputs['Loss'] = scl_loss_per_epoch
+                        hscl_eval_outputs['Loss'] = hscl_loss_per_epoch
                         # ce_eval_outputs['Loss'] = ce_loss_per_epoch
-                        self.log_metrics(dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs, epoch)
+                        self.log_metrics(dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, hscl_eval_outputs, ce_eval_outputs, epoch)
 
             # Optionally, if using distributed training, you might call a barrier here:
             if dist.get_world_size() > 1:
@@ -347,6 +378,9 @@ class ParallelTrainer:
         # Evaluate SCL Model
         self.scl_model.eval()
         scl_eval_outputs = self._evaluate_single_model(self.scl_model)
+        # Evaluate HSCL Model
+        self.hscl_model.eval()
+        hscl_eval_outputs = self._evaluate_single_model(self.hscl_model)
         # # Evaluate CE Model
         # self.ce_model.eval()
         # ce_eval_outputs = self._evaluate_single_model(self.ce_model)
@@ -356,9 +390,10 @@ class ParallelTrainer:
         self.dcl_model.train()
         self.nscl_model.train()
         self.scl_model.train()
+        self.hscl_model.train()
         # self.ce_model.train()
 
-        return dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs
+        return dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, hscl_eval_outputs, ce_eval_outputs
 
     @torch.no_grad
     def _evaluate_single_model(self, model: torch.nn.Module):
@@ -399,12 +434,12 @@ class ParallelTrainer:
             pass # TODO
         return eval_outputs
     
-    def log_metrics(self, dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, ce_eval_outputs, cur_epoch):
+    def log_metrics(self, dcl_eval_outputs, nscl_eval_outputs, scl_eval_outputs, hscl_eval_outputs, ce_eval_outputs, cur_epoch):
         # define epoch as x-axis
         if not self.wandb_defined:
             wandb.define_metric("epoch")
             wandb.define_metric("learning_rate", step_metric="epoch")
-            for model_prefix in ["dcl", "nscl", "scl", "ce"]:
+            for model_prefix in ["dcl", "nscl", "scl", "hscl", "ce"]:
                 wandb.define_metric(f"{model_prefix}_loss", step_metric="epoch")
                 wandb.define_metric(f"{model_prefix}_nccc", step_metric="epoch")
                 wandb.define_metric(f"{model_prefix}_cdnv", step_metric="epoch")
@@ -424,6 +459,7 @@ class ParallelTrainer:
             "dcl": dcl_eval_outputs,
             "nscl": nscl_eval_outputs,
             "scl": scl_eval_outputs,
+            "hscl": hscl_eval_outputs,
             # "ce": ce_eval_outputs
         }
         for model_prefix, eval_outputs in eval_outputs_map.items():
@@ -560,6 +596,9 @@ if __name__ == "__main__":
         scl_model = deepcopy(dcl_model)
         scl_model.encoder.remove_hook()
         scl_model.encoder._register_hook()
+        hscl_model = deepcopy(dcl_model)
+        hscl_model.encoder.remove_hook()
+        hscl_model.encoder._register_hook()
     else:
         raise NotImplementedError(f"{method_type} not implemented")
 
@@ -567,6 +606,7 @@ if __name__ == "__main__":
     dcl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(dcl_model)
     nscl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(nscl_model)
     scl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(scl_model)
+    hscl_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(hscl_model)
     # dist.barrier() # wait for all processes to catch up
 
     # define loss & optimizer
@@ -583,20 +623,24 @@ if __name__ == "__main__":
     criterion2 = NegSupConLoss(temperature, device)
     print("Using Supervised Contrastive Learning")
     criterion3 = SupConLoss(temperature, device)
-    # criterion4 = nn.CrossEntropyLoss(reduction='mean')
+    print("Using Hybrid Supervised Contrastive Learning")
+    criterion4 = HybridSupConLoss(temperature, device)
+    # criterion5 = nn.CrossEntropyLoss(reduction='mean')
     effective_lr = lr*world_size*(batch_size//256)
     # train model
     trainer = ParallelTrainer(
         dcl_model=dcl_model,
         nscl_model=nscl_model,
         scl_model=scl_model,
+        hscl_model=hscl_model,
         # ce_model=ce_model,
         train_loader=train_loader,
         test_loader=test_loader,
         criterion1=criterion1,
         criterion2=criterion2,
         criterion3=criterion3,
-        # criterion4=criterion4,
+        criterion4=criterion4,
+        # criterion5=criterion5,
         save_every=save_every,
         log_every=log_every,
         snapshot_dir=checkpoints_dir,
