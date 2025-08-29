@@ -1,0 +1,11 @@
+{"time":"2025-08-28T16:53:56.800103603-05:00","level":"INFO","msg":"stream: starting","core version":"0.21.1"}
+{"time":"2025-08-28T16:53:57.211209933-05:00","level":"INFO","msg":"stream: created new stream","id":"htsow9we"}
+{"time":"2025-08-28T16:53:57.211324143-05:00","level":"INFO","msg":"stream: started","id":"htsow9we"}
+{"time":"2025-08-28T16:53:57.211421658-05:00","level":"INFO","msg":"writer: started","stream_id":"htsow9we"}
+{"time":"2025-08-28T16:53:57.211545613-05:00","level":"INFO","msg":"sender: started","stream_id":"htsow9we"}
+{"time":"2025-08-28T16:53:57.211419185-05:00","level":"INFO","msg":"handler: started","stream_id":"htsow9we"}
+{"time":"2025-08-28T17:24:24.685815252-05:00","level":"INFO","msg":"stream: closing","id":"htsow9we"}
+{"time":"2025-08-28T17:24:25.239547886-05:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-08-28T17:24:25.420418937-05:00","level":"INFO","msg":"handler: closed","stream_id":"htsow9we"}
+{"time":"2025-08-28T17:24:25.420620478-05:00","level":"INFO","msg":"sender: closed","stream_id":"htsow9we"}
+{"time":"2025-08-28T17:24:25.420663111-05:00","level":"INFO","msg":"stream: closed","id":"htsow9we"}

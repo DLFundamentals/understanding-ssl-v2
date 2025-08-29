@@ -1,0 +1,65 @@
+{
+  "os": "Linux-6.14.0-28-generic-x86_64-with-glibc2.39",
+  "python": "CPython 3.10.18",
+  "startedAt": "2025-08-26T17:14:14.945108Z",
+  "args": [
+    "--config",
+    "configs/cifar100_resnet50.yaml"
+  ],
+  "program": "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py",
+  "codePath": "scripts/parallel_dcl_nscl_train_simclr.py",
+  "codePathLocal": "scripts/parallel_dcl_nscl_train_simclr.py",
+  "git": {
+    "remote": "https://github.com/DLFundamentals/understanding_ssl_v2.git",
+    "commit": "13152369f1ffaae8db12b723dbad58899a0750cf"
+  },
+  "email": "priyadarsimishra@tamu.edu",
+  "root": "/home/priyadarsimishra/understanding_ssl_v2",
+  "host": "csce-galanti-s1.engr.tamu.edu",
+  "executable": "/home/priyadarsimishra/anaconda3/envs/contrastive/bin/python",
+  "cpu_count": 128,
+  "cpu_count_logical": 256,
+  "gpu": "NVIDIA H100 NVL",
+  "gpu_count": 4,
+  "disk": {
+    "/": {
+      "total": "409930686464",
+      "used": "60655235072"
+    }
+  },
+  "memory": {
+    "total": "1217102843904"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA H100 NVL",
+      "memoryTotal": "100485038080",
+      "cudaCores": 16896,
+      "architecture": "Hopper",
+      "uuid": "GPU-041c541b-6dcf-f2a6-1259-8d701d973384"
+    },
+    {
+      "name": "NVIDIA H100 NVL",
+      "memoryTotal": "100485038080",
+      "cudaCores": 16896,
+      "architecture": "Hopper",
+      "uuid": "GPU-a98f3fdb-ad45-b66d-3ff7-27a99f03432e"
+    },
+    {
+      "name": "NVIDIA H100 NVL",
+      "memoryTotal": "100485038080",
+      "cudaCores": 16896,
+      "architecture": "Hopper",
+      "uuid": "GPU-fb51941f-b1a9-44da-13a7-9c701dbf59b5"
+    },
+    {
+      "name": "NVIDIA H100 NVL",
+      "memoryTotal": "100485038080",
+      "cudaCores": 16896,
+      "architecture": "Hopper",
+      "uuid": "GPU-86e46df3-6fca-376e-2cc1-3fbc0d906ed9"
+    }
+  ],
+  "cudaVersion": "12.9",
+  "writerId": "gpx42odg7foss734960vdh3hsiohvpvc"
+}

@@ -1,0 +1,55 @@
+Dataset: cifar100
+100%|████████████████████████████████████████████████████████████████████| 169M/169M [00:04<00:00, 40.9MB/s]
+Using Decoupled Contrastive Learning
+Using Weakly-Supervised Contrastive Learning
+[GPU 0] Training epoch 0...
+  8%|██████                                                                  | 4/48 [00:06<00:56,  1.29s/it]/home/priyadarsimishra/understanding_ssl_v2/utils/optimizer.py:142: UserWarning: This overload of add_ is deprecated:
+🧮 Accumulative batch loss at batch idx 0 for DCL model: 8.553271293640137
+🧮 Accumulative batch loss at batch idx 0 for NSCL model: 8.5419921875
+🧮 Accumulative batch loss at batch idx 1 for DCL model: 16.943020820617676
+🧮 Accumulative batch loss at batch idx 1 for NSCL model: 16.92028045654297
+🧮 Accumulative batch loss at batch idx 2 for DCL model: 25.422419548034668
+🧮 Accumulative batch loss at batch idx 2 for NSCL model: 25.38812255859375
+🧮 Accumulative batch loss at batch idx 3 for DCL model: 33.73730754852295
+🧮 Accumulative batch loss at batch idx 3 for NSCL model: 33.69116401672363
+	add_(Number alpha, Tensor other)
+Consider using one of the following signatures instead:
+	add_(Tensor other, *, Number alpha = 1) (Triggered internally at /pytorch/torch/csrc/utils/python_arg_parser.cpp:1691.)
+  next_v.mul_(momentum).add_(scaled_lr, grad)
+🧮 Accumulative batch loss at batch idx 4 for DCL model: 42.12004375457764
+🧮 Accumulative batch loss at batch idx 4 for NSCL model: 42.06275749206543
+ 17%|████████████                                                            | 8/48 [00:11<00:55,  1.38s/it]
+🧮 Accumulative batch loss at batch idx 5 for DCL model: 50.531296730041504
+🧮 Accumulative batch loss at batch idx 5 for NSCL model: 50.46611404418945
+🧮 Accumulative batch loss at batch idx 6 for DCL model: 58.83113765716553
+🧮 Accumulative batch loss at batch idx 6 for NSCL model: 58.74568557739258
+🧮 Accumulative batch loss at batch idx 7 for DCL model: 66.84599018096924
+🧮 Accumulative batch loss at batch idx 7 for NSCL model: 66.75839614868164
+Traceback (most recent call last):
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 541, in <module>
+    trainer.train(epochs)
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 263, in train
+    ssl_loss_per_epoch, nscl_loss_per_epoch = self._run_epoch(epoch)
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 235, in _run_epoch
+    self.scaler2.scale(loss2).backward()
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/_tensor.py", line 647, in backward
+    torch.autograd.backward(
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/graph.py", line 829, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 541, in <module>
+[rank0]:     trainer.train(epochs)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 263, in train
+[rank0]:     ssl_loss_per_epoch, nscl_loss_per_epoch = self._run_epoch(epoch)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 235, in _run_epoch
+[rank0]:     self.scaler2.scale(loss2).backward()
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/_tensor.py", line 647, in backward
+[rank0]:     torch.autograd.backward(
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+[rank0]:     _engine_run_backward(
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/graph.py", line 829, in _engine_run_backward
+[rank0]:     return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[rank0]: KeyboardInterrupt

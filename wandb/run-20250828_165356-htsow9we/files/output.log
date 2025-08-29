@@ -1,0 +1,387 @@
+Dataset: cifar100
+100%|███████████████████████████████████████████████████████████████████| 169M/169M [00:03<00:00, 49.1MB/s]
+Setting up Decoupled Contrastive Learning
+Setting up Negatives-only Supervised Contrastive Learning
+Setting up Supervised Contrastive Learning
+[GPU 0] Training epoch 0...
+  6%|████▍                                                                  | 3/48 [00:07<01:27,  1.95s/it]/home/priyadarsimishra/understanding_ssl_v2/utils/optimizer.py:142: UserWarning: This overload of add_ is deprecated:
+🧮 Accumulative batch loss at batch idx 0 for DCL model: 8.225056648254395
+🧮 Accumulative batch loss at batch idx 0 for NSCL model: 8.213823318481445
+🧮 Accumulative batch loss at batch idx 0 for SCL model: 8.671455383300781
+🧮 Accumulative batch loss at batch idx 1 for DCL model: 16.46724796295166
+🧮 Accumulative batch loss at batch idx 1 for NSCL model: 16.443449020385742
+🧮 Accumulative batch loss at batch idx 1 for SCL model: 17.358810424804688
+🧮 Accumulative batch loss at batch idx 2 for DCL model: 24.841679573059082
+🧮 Accumulative batch loss at batch idx 2 for NSCL model: 24.806568145751953
+🧮 Accumulative batch loss at batch idx 2 for SCL model: 26.08692169189453
+	add_(Number alpha, Tensor other)
+Consider using one of the following signatures instead:
+	add_(Tensor other, *, Number alpha = 1) (Triggered internally at /pytorch/torch/csrc/utils/python_arg_parser.cpp:1691.)
+  next_v.mul_(momentum).add_(scaled_lr, grad)
+🧮 Accumulative batch loss at batch idx 3 for DCL model: 33.08164119720459
+🧮 Accumulative batch loss at batch idx 3 for NSCL model: 33.03477191925049
+🧮 Accumulative batch loss at batch idx 3 for SCL model: 34.76853656768799
+ 29%|████████████████████▍                                                 | 14/48 [00:20<00:41,  1.22s/it]
+🧮 Accumulative batch loss at batch idx 4 for DCL model: 41.33924198150635
+🧮 Accumulative batch loss at batch idx 4 for NSCL model: 41.279903411865234
+🧮 Accumulative batch loss at batch idx 4 for SCL model: 43.31553936004639
+🧮 Accumulative batch loss at batch idx 5 for DCL model: 49.57962894439697
+🧮 Accumulative batch loss at batch idx 5 for NSCL model: 49.51347351074219
+🧮 Accumulative batch loss at batch idx 5 for SCL model: 51.67910671234131
+🧮 Accumulative batch loss at batch idx 6 for DCL model: 57.66755294799805
+🧮 Accumulative batch loss at batch idx 6 for NSCL model: 57.603294372558594
+🧮 Accumulative batch loss at batch idx 6 for SCL model: 59.942809104919434
+🧮 Accumulative batch loss at batch idx 7 for DCL model: 65.72163105010986
+🧮 Accumulative batch loss at batch idx 7 for NSCL model: 65.63502883911133
+🧮 Accumulative batch loss at batch idx 7 for SCL model: 68.18356418609619
+🧮 Accumulative batch loss at batch idx 8 for DCL model: 73.72036266326904
+🧮 Accumulative batch loss at batch idx 8 for NSCL model: 73.65066528320312
+🧮 Accumulative batch loss at batch idx 8 for SCL model: 76.35981845855713
+🧮 Accumulative batch loss at batch idx 9 for DCL model: 81.69627571105957
+🧮 Accumulative batch loss at batch idx 9 for NSCL model: 81.67988395690918
+🧮 Accumulative batch loss at batch idx 9 for SCL model: 84.53806495666504
+🧮 Accumulative batch loss at batch idx 10 for DCL model: 89.68467378616333
+🧮 Accumulative batch loss at batch idx 10 for NSCL model: 89.60494041442871
+🧮 Accumulative batch loss at batch idx 10 for SCL model: 92.67252731323242
+🧮 Accumulative batch loss at batch idx 11 for DCL model: 97.69924211502075
+🧮 Accumulative batch loss at batch idx 11 for NSCL model: 97.58846092224121
+🧮 Accumulative batch loss at batch idx 11 for SCL model: 100.79813289642334
+🧮 Accumulative batch loss at batch idx 12 for DCL model: 105.63263130187988
+🧮 Accumulative batch loss at batch idx 12 for NSCL model: 105.49760150909424
+🧮 Accumulative batch loss at batch idx 12 for SCL model: 108.90400981903076
+🧮 Accumulative batch loss at batch idx 13 for DCL model: 113.5434799194336
+🧮 Accumulative batch loss at batch idx 13 for NSCL model: 113.39712810516357
+🧮 Accumulative batch loss at batch idx 13 for SCL model: 116.99147605895996
+🧮 Accumulative batch loss at batch idx 14 for DCL model: 121.43224811553955
+🧮 Accumulative batch loss at batch idx 14 for NSCL model: 121.31198215484619
+🧮 Accumulative batch loss at batch idx 14 for SCL model: 125.0792465209961
+🧮 Accumulative batch loss at batch idx 15 for DCL model: 129.41330575942993
+🧮 Accumulative batch loss at batch idx 15 for NSCL model: 129.2553210258484
+🧮 Accumulative batch loss at batch idx 15 for SCL model: 133.16382789611816
+🧮 Accumulative batch loss at batch idx 16 for DCL model: 137.3106780052185
+🧮 Accumulative batch loss at batch idx 16 for NSCL model: 137.11201524734497
+🧮 Accumulative batch loss at batch idx 16 for SCL model: 141.22442626953125
+🧮 Accumulative batch loss at batch idx 17 for DCL model: 145.21412134170532
+🧮 Accumulative batch loss at batch idx 17 for NSCL model: 144.9923300743103
+🧮 Accumulative batch loss at batch idx 17 for SCL model: 149.30212879180908
+🧮 Accumulative batch loss at batch idx 18 for DCL model: 153.1148648262024
+🧮 Accumulative batch loss at batch idx 18 for NSCL model: 152.87344408035278
+🧮 Accumulative batch loss at batch idx 18 for SCL model: 157.35853099822998
+🧮 Accumulative batch loss at batch idx 19 for DCL model: 161.01156949996948
+🧮 Accumulative batch loss at batch idx 19 for NSCL model: 160.73520183563232
+🧮 Accumulative batch loss at batch idx 19 for SCL model: 165.41046142578125
+🧮 Accumulative batch loss at batch idx 20 for DCL model: 168.84454679489136
+🧮 Accumulative batch loss at batch idx 20 for NSCL model: 168.56236171722412
+🧮 Accumulative batch loss at batch idx 20 for SCL model: 173.4617691040039
+🧮 Accumulative batch loss at batch idx 21 for DCL model: 176.6929383277893
+🧮 Accumulative batch loss at batch idx 21 for NSCL model: 176.39367294311523
+🧮 Accumulative batch loss at batch idx 21 for SCL model: 181.52320289611816
+🧮 Accumulative batch loss at batch idx 22 for DCL model: 184.54539155960083
+🧮 Accumulative batch loss at batch idx 22 for NSCL model: 184.23606824874878
+🧮 Accumulative batch loss at batch idx 22 for SCL model: 189.56836414337158
+🧮 Accumulative batch loss at batch idx 23 for DCL model: 192.35901880264282
+🧮 Accumulative batch loss at batch idx 23 for NSCL model: 191.97500276565552
+🧮 Accumulative batch loss at batch idx 23 for SCL model: 197.59707832336426
+🧮 Accumulative batch loss at batch idx 24 for DCL model: 200.155864238739
+🧮 Accumulative batch loss at batch idx 24 for NSCL model: 199.78409433364868
+🧮 Accumulative batch loss at batch idx 24 for SCL model: 205.61418914794922
+🧮 Accumulative batch loss at batch idx 25 for DCL model: 207.95387268066406
+🧮 Accumulative batch loss at batch idx 25 for NSCL model: 207.59915685653687
+🧮 Accumulative batch loss at batch idx 25 for SCL model: 213.6704444885254
+🧮 Accumulative batch loss at batch idx 26 for DCL model: 215.7497968673706
+🧮 Accumulative batch loss at batch idx 26 for NSCL model: 215.38218307495117
+🧮 Accumulative batch loss at batch idx 26 for SCL model: 221.6926212310791
+🧮 Accumulative batch loss at batch idx 27 for DCL model: 223.56368923187256
+🧮 Accumulative batch loss at batch idx 27 for NSCL model: 223.16354084014893
+🧮 Accumulative batch loss at batch idx 27 for SCL model: 229.72666454315186
+🧮 Accumulative batch loss at batch idx 28 for DCL model: 231.32868576049805
+🧮 Accumulative batch loss at batch idx 28 for NSCL model: 230.96956062316895
+🧮 Accumulative batch loss at batch idx 28 for SCL model: 237.75237274169922
+🧮 Accumulative batch loss at batch idx 29 for DCL model: 239.08506870269775
+🧮 Accumulative batch loss at batch idx 29 for NSCL model: 238.77483749389648
+🧮 Accumulative batch loss at batch idx 29 for SCL model: 245.77978038787842
+🧮 Accumulative batch loss at batch idx 30 for DCL model: 246.83541011810303
+🧮 Accumulative batch loss at batch idx 30 for NSCL model: 246.48974132537842
+🧮 Accumulative batch loss at batch idx 30 for SCL model: 253.81445980072021
+🧮 Accumulative batch loss at batch idx 31 for DCL model: 254.595121383667
+🧮 Accumulative batch loss at batch idx 31 for NSCL model: 254.19732856750488
+🧮 Accumulative batch loss at batch idx 31 for SCL model: 261.8397626876831
+🧮 Accumulative batch loss at batch idx 32 for DCL model: 262.35485076904297
+🧮 Accumulative batch loss at batch idx 32 for NSCL model: 261.97669553756714
+🧮 Accumulative batch loss at batch idx 32 for SCL model: 269.8654451370239
+🧮 Accumulative batch loss at batch idx 33 for DCL model: 270.0561800003052
+🧮 Accumulative batch loss at batch idx 33 for NSCL model: 269.71339654922485
+🧮 Accumulative batch loss at batch idx 33 for SCL model: 277.88836574554443
+🧮 Accumulative batch loss at batch idx 34 for DCL model: 277.727587223053
+🧮 Accumulative batch loss at batch idx 34 for NSCL model: 277.4196915626526
+🧮 Accumulative batch loss at batch idx 34 for SCL model: 285.90843963623047
+🧮 Accumulative batch loss at batch idx 35 for DCL model: 285.4280652999878
+🧮 Accumulative batch loss at batch idx 35 for NSCL model: 285.15535974502563
+🧮 Accumulative batch loss at batch idx 35 for SCL model: 293.921856880188
+🧮 Accumulative batch loss at batch idx 36 for DCL model: 293.11900806427
+🧮 Accumulative batch loss at batch idx 36 for NSCL model: 292.9365162849426
+🧮 Accumulative batch loss at batch idx 36 for SCL model: 301.9429349899292
+🧮 Accumulative batch loss at batch idx 37 for DCL model: 300.86749172210693
+🧮 Accumulative batch loss at batch idx 37 for NSCL model: 300.68402576446533
+🧮 Accumulative batch loss at batch idx 37 for SCL model: 309.94244861602783
+🧮 Accumulative batch loss at batch idx 38 for DCL model: 308.6477704048157
+🧮 Accumulative batch loss at batch idx 38 for NSCL model: 308.43743419647217
+🧮 Accumulative batch loss at batch idx 38 for SCL model: 317.9657964706421
+🧮 Accumulative batch loss at batch idx 39 for DCL model: 316.3500461578369
+🧮 Accumulative batch loss at batch idx 39 for NSCL model: 316.12928676605225
+🧮 Accumulative batch loss at batch idx 39 for SCL model: 325.97650241851807
+🧮 Accumulative batch loss at batch idx 40 for DCL model: 323.9973430633545
+🧮 Accumulative batch loss at batch idx 40 for NSCL model: 323.7991132736206
+🧮 Accumulative batch loss at batch idx 40 for SCL model: 333.99244499206543
+🧮 Accumulative batch loss at batch idx 41 for DCL model: 331.64139318466187
+🧮 Accumulative batch loss at batch idx 41 for NSCL model: 331.4301815032959
+🧮 Accumulative batch loss at batch idx 41 for SCL model: 341.9943161010742
+🧮 Accumulative batch loss at batch idx 42 for DCL model: 339.35018730163574
+🧮 Accumulative batch loss at batch idx 42 for NSCL model: 339.1246438026428
+🧮 Accumulative batch loss at batch idx 42 for SCL model: 349.9883737564087
+🧮 Accumulative batch loss at batch idx 43 for DCL model: 347.02668857574463
+🧮 Accumulative batch loss at batch idx 43 for NSCL model: 346.7798066139221
+🧮 Accumulative batch loss at batch idx 43 for SCL model: 357.9664058685303
+🧮 Accumulative batch loss at batch idx 44 for DCL model: 354.69793033599854
+🧮 Accumulative batch loss at batch idx 44 for NSCL model: 354.4496169090271
+🧮 Accumulative batch loss at batch idx 44 for SCL model: 365.9567108154297
+🧮 Accumulative batch loss at batch idx 45 for DCL model: 362.44444608688354
+🧮 Accumulative batch loss at batch idx 45 for NSCL model: 362.13318252563477
+🧮 Accumulative batch loss at batch idx 45 for SCL model: 373.9600296020508
+🧮 Accumulative batch loss at batch idx 46 for DCL model: 370.0621933937073
+🧮 Accumulative batch loss at batch idx 46 for NSCL model: 369.77906799316406
+🧮 Accumulative batch loss at batch idx 46 for SCL model: 381.9397096633911
+🧮 Accumulative batch loss at batch idx 47 for DCL model: 377.6990222930908
+🧮 Accumulative batch loss at batch idx 47 for NSCL model: 377.45578384399414
+🧮 Accumulative batch loss at batch idx 47 for SCL model: 389.92817974090576
+Saved dcl model to checkpoints/cifar100_parallel//dcl/snapshot_0.pth at epoch 0
+Saved nscl model to checkpoints/cifar100_parallel//nscl/snapshot_0.pth at epoch 0
+Saved scl model to checkpoints/cifar100_parallel//scl/snapshot_0.pth at epoch 0
+Saved all models at epoch 0
+DCL Loss per epoch: 7.868729631106059
+NSCL Loss per epoch: 7.863662163416545
+SCL Loss per epoch: 8.123503744602203
+
+=== Starting Evaluation ===
+perform_rsa: True
+len(self.models_config): 3
+models_config keys: ['dcl', 'nscl', 'scl']
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:02<00:00,  3.52it/s]
+Extracted features for dcl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.45it/s]
+Evaluation accuracies: [0.08419999480247498]
+CDNV: 20.022743225097656, Dir-CDNV: 6.649022579193115
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.45it/s]
+Extracted features for nscl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.27it/s]
+Evaluation accuracies: [0.07840000092983246]
+CDNV: 18.990713119506836, Dir-CDNV: 6.269508361816406
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.33it/s]
+Extracted features for scl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.20it/s]
+Evaluation accuracies: [0.10619999468326569]
+CDNV: 18.27423667907715, Dir-CDNV: 4.8459296226501465
+
+=== Starting RSA Computation ===
+Available models: ['dcl', 'nscl', 'scl']
+Available eval_outputs: ['dcl', 'nscl', 'scl']
+Available model_configs: ['dcl', 'nscl', 'scl']
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|██████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 84.57it/s]
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 191.39it/s]
+
+RSA (Pearson) Correlation between DCL and nscl features: -0.0061 with p-value: 0.0000e+00
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 191.74it/s]
+
+RSA (Pearson) Correlation between DCL and scl features: -0.0061 with p-value: 0.0000e+00
+
+--- RSA Computation Complete ---
+eval_outputs: {'dcl': defaultdict(None, {'NCCC': 0.08419999480247498, 'CDNV': 20.022743225097656, 'd-CDNV': 6.649022579193115, 'Loss': 7.868729631106059}), 'nscl': defaultdict(None, {'NCCC': 0.07840000092983246, 'CDNV': 18.990713119506836, 'd-CDNV': 6.269508361816406, 'RSA': np.float32(-0.006082521), 'p-value': np.float64(0.0), 'Loss': 7.863662163416545}), 'scl': defaultdict(None, {'NCCC': 0.10619999468326569, 'CDNV': 18.27423667907715, 'd-CDNV': 4.8459296226501465, 'RSA': np.float32(-0.0061245053), 'p-value': np.float64(0.0), 'Loss': 8.123503744602203})}
+outputs: defaultdict(None, {'NCCC': 0.07840000092983246, 'CDNV': 18.990713119506836, 'd-CDNV': 6.269508361816406, 'RSA': np.float32(-0.006082521), 'p-value': np.float64(0.0), 'Loss': 7.863662163416545})
+outputs: defaultdict(None, {'NCCC': 0.10619999468326569, 'CDNV': 18.27423667907715, 'd-CDNV': 4.8459296226501465, 'RSA': np.float32(-0.0061245053), 'p-value': np.float64(0.0), 'Loss': 8.123503744602203})
+[GPU 0] Training epoch 1...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.26s/it]
+[GPU 0] Training epoch 2...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 3...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 4...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 5...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 6...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 7...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 8...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 9...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 10...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+Saved dcl model to checkpoints/cifar100_parallel//dcl/snapshot_10.pth at epoch 10
+Saved nscl model to checkpoints/cifar100_parallel//nscl/snapshot_10.pth at epoch 10
+Saved scl model to checkpoints/cifar100_parallel//scl/snapshot_10.pth at epoch 10
+Saved all models at epoch 10
+DCL Loss per epoch: 3.565146798888842
+NSCL Loss per epoch: 3.507282997171084
+SCL Loss per epoch: 7.883558293183644
+
+=== Starting Evaluation ===
+perform_rsa: True
+len(self.models_config): 3
+models_config keys: ['dcl', 'nscl', 'scl']
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.62it/s]
+Extracted features for dcl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.39it/s]
+Evaluation accuracies: [0.2264999896287918]
+CDNV: 3.544229030609131, Dir-CDNV: 0.22571752965450287
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.47it/s]
+Extracted features for nscl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.29it/s]
+Evaluation accuracies: [0.23389999568462372]
+CDNV: 3.45883846282959, Dir-CDNV: 0.2268431931734085
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.29it/s]
+Extracted features for scl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.21it/s]
+Evaluation accuracies: [0.23309999704360962]
+CDNV: 10.23978328704834, Dir-CDNV: 0.21016737818717957
+
+=== Starting RSA Computation ===
+Available models: ['dcl', 'nscl', 'scl']
+Available eval_outputs: ['dcl', 'nscl', 'scl']
+Available model_configs: ['dcl', 'nscl', 'scl']
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 181.07it/s]
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 186.99it/s]
+
+RSA (Pearson) Correlation between DCL and nscl features: -0.0011 with p-value: 4.9784e-16
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 184.70it/s]
+
+RSA (Pearson) Correlation between DCL and scl features: -0.0023 with p-value: 3.0331e-61
+
+--- RSA Computation Complete ---
+eval_outputs: {'dcl': defaultdict(None, {'NCCC': 0.2264999896287918, 'CDNV': 3.544229030609131, 'd-CDNV': 0.22571752965450287, 'Loss': 3.565146798888842}), 'nscl': defaultdict(None, {'NCCC': 0.23389999568462372, 'CDNV': 3.45883846282959, 'd-CDNV': 0.2268431931734085, 'RSA': np.float32(-0.0011472177), 'p-value': np.float64(4.978418727362439e-16), 'Loss': 3.507282997171084}), 'scl': defaultdict(None, {'NCCC': 0.23309999704360962, 'CDNV': 10.23978328704834, 'd-CDNV': 0.21016737818717957, 'RSA': np.float32(-0.002335137), 'p-value': np.float64(3.0330758202563433e-61), 'Loss': 7.883558293183644})}
+outputs: defaultdict(None, {'NCCC': 0.23389999568462372, 'CDNV': 3.45883846282959, 'd-CDNV': 0.2268431931734085, 'RSA': np.float32(-0.0011472177), 'p-value': np.float64(4.978418727362439e-16), 'Loss': 3.507282997171084})
+outputs: defaultdict(None, {'NCCC': 0.23309999704360962, 'CDNV': 10.23978328704834, 'd-CDNV': 0.21016737818717957, 'RSA': np.float32(-0.002335137), 'p-value': np.float64(3.0330758202563433e-61), 'Loss': 7.883558293183644})
+[GPU 0] Training epoch 11...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [00:59<00:00,  1.25s/it]
+[GPU 0] Training epoch 12...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [00:59<00:00,  1.25s/it]
+[GPU 0] Training epoch 13...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 14...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 15...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 16...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 17...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 18...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 19...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 20...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [00:59<00:00,  1.25s/it]
+Saved dcl model to checkpoints/cifar100_parallel//dcl/snapshot_20.pth at epoch 20
+Saved nscl model to checkpoints/cifar100_parallel//nscl/snapshot_20.pth at epoch 20
+Saved scl model to checkpoints/cifar100_parallel//scl/snapshot_20.pth at epoch 20
+Saved all models at epoch 20
+DCL Loss per epoch: 2.5140760441621146
+NSCL Loss per epoch: 2.4684598048528037
+SCL Loss per epoch: 7.025697290897369
+
+=== Starting Evaluation ===
+perform_rsa: True
+len(self.models_config): 3
+models_config keys: ['dcl', 'nscl', 'scl']
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.45it/s]
+Extracted features for dcl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.44it/s]
+Evaluation accuracies: [0.3044999837875366]
+CDNV: 2.723043441772461, Dir-CDNV: 0.147511288523674
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.43it/s]
+Extracted features for nscl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.29it/s]
+Evaluation accuracies: [0.3109999895095825]
+CDNV: 2.6290671825408936, Dir-CDNV: 0.14504824578762054
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.31it/s]
+Extracted features for scl: torch.Size([10000, 2048])
+Extracting Features: 100%|█████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.36it/s]
+Evaluation accuracies: [0.42289999127388]
+CDNV: 2.7393479347229004, Dir-CDNV: 0.10665629804134369
+
+=== Starting RSA Computation ===
+Available models: ['dcl', 'nscl', 'scl']
+Available eval_outputs: ['dcl', 'nscl', 'scl']
+Available model_configs: ['dcl', 'nscl', 'scl']
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 180.30it/s]
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 184.65it/s]
+
+RSA (Pearson) Correlation between DCL and nscl features: -0.0058 with p-value: 0.0000e+00
+Computing RDM with cosine distance on device: cuda (chunk_size: 1024)...
+100%|█████████████████████████████████████████████████████████████████████| 10/10 [00:00<00:00, 185.01it/s]
+
+RSA (Pearson) Correlation between DCL and scl features: -0.0071 with p-value: 0.0000e+00
+
+--- RSA Computation Complete ---
+eval_outputs: {'dcl': defaultdict(None, {'NCCC': 0.3044999837875366, 'CDNV': 2.723043441772461, 'd-CDNV': 0.147511288523674, 'Loss': 2.5140760441621146}), 'nscl': defaultdict(None, {'NCCC': 0.3109999895095825, 'CDNV': 2.6290671825408936, 'd-CDNV': 0.14504824578762054, 'RSA': np.float32(-0.0057857847), 'p-value': np.float64(0.0), 'Loss': 2.4684598048528037}), 'scl': defaultdict(None, {'NCCC': 0.42289999127388, 'CDNV': 2.7393479347229004, 'd-CDNV': 0.10665629804134369, 'RSA': np.float32(-0.007114909), 'p-value': np.float64(0.0), 'Loss': 7.025697290897369})}
+outputs: defaultdict(None, {'NCCC': 0.3109999895095825, 'CDNV': 2.6290671825408936, 'd-CDNV': 0.14504824578762054, 'RSA': np.float32(-0.0057857847), 'p-value': np.float64(0.0), 'Loss': 2.4684598048528037})
+outputs: defaultdict(None, {'NCCC': 0.42289999127388, 'CDNV': 2.7393479347229004, 'd-CDNV': 0.10665629804134369, 'RSA': np.float32(-0.007114909), 'p-value': np.float64(0.0), 'Loss': 7.025697290897369})
+[GPU 0] Training epoch 21...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 22...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 23...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 24...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 25...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 26...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 27...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 28...
+100%|██████████████████████████████████████████████████████████████████████| 48/48 [01:00<00:00,  1.25s/it]
+[GPU 0] Training epoch 29...
+ 23%|████████████████                                                      | 11/48 [00:15<00:52,  1.43s/it]
+Traceback (most recent call last):
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 477, in <module>
+    stride=16 if 'imagenet' in dataset_name else 2,
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 173, in train
+    losses_per_epoch = self._run_epoch(epoch)
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 151, in _run_epoch
+    loss = model_config.train_step(batch, self.gpu_id)
+  File "/home/priyadarsimishra/understanding_ssl_v2/models/model_config.py", line 23, in train_step
+    self.scaler.scale(loss).backward()
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/_tensor.py", line 647, in backward
+    torch.autograd.backward(
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+    _engine_run_backward(
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/graph.py", line 829, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+KeyboardInterrupt
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 477, in <module>
+[rank0]:     stride=16 if 'imagenet' in dataset_name else 2,
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 173, in train
+[rank0]:     losses_per_epoch = self._run_epoch(epoch)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 151, in _run_epoch
+[rank0]:     loss = model_config.train_step(batch, self.gpu_id)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/models/model_config.py", line 23, in train_step
+[rank0]:     self.scaler.scale(loss).backward()
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/_tensor.py", line 647, in backward
+[rank0]:     torch.autograd.backward(
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/__init__.py", line 354, in backward
+[rank0]:     _engine_run_backward(
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/autograd/graph.py", line 829, in _engine_run_backward
+[rank0]:     return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[rank0]: KeyboardInterrupt

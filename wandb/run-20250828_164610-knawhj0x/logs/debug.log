@@ -1,0 +1,22 @@
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_setup.py:_flush():80] Current SDK version is 0.21.1
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_setup.py:_flush():80] Configure stats pid to 229720
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_setup.py:_flush():80] Loading settings from /home/priyadarsimishra/.config/wandb/settings
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_setup.py:_flush():80] Loading settings from /home/priyadarsimishra/understanding_ssl_v2/wandb/settings
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_setup.py:_flush():80] Loading settings from environment variables
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_init.py:setup_run_log_directory():703] Logging user logs to /home/priyadarsimishra/understanding_ssl_v2/wandb/run-20250828_164610-knawhj0x/logs/debug.log
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_init.py:setup_run_log_directory():704] Logging internal logs to /home/priyadarsimishra/understanding_ssl_v2/wandb/run-20250828_164610-knawhj0x/logs/debug-internal.log
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_init.py:init():830] calling init triggers
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_init.py:init():835] wandb.init called with sweep_config: {}
+config: {'experiment_name': 'simclr/cifar100', 'dataset_name': 'cifar100', 'batch_size': 1024, 'lr': 0.3, 'augment_both': True, 'world_size': 1, 'encoder_type': 'resnet50', 'width_multiplier': 1, 'hidden_dim': 2048, 'projection_dim': 128, 'temperature': 0.1, '_wandb': {}}
+2025-08-28 16:46:10,495 INFO    MainThread:229720 [wandb_init.py:init():871] starting backend
+2025-08-28 16:46:10,702 INFO    MainThread:229720 [wandb_init.py:init():874] sending inform_init request
+2025-08-28 16:46:10,708 INFO    MainThread:229720 [wandb_init.py:init():882] backend started and connected
+2025-08-28 16:46:10,711 INFO    MainThread:229720 [wandb_init.py:init():953] updated telemetry
+2025-08-28 16:46:10,718 INFO    MainThread:229720 [wandb_init.py:init():977] communicating run to backend with 90.0 second timeout
+2025-08-28 16:46:11,553 INFO    MainThread:229720 [wandb_init.py:init():1029] starting run threads in backend
+2025-08-28 16:46:11,680 INFO    MainThread:229720 [wandb_run.py:_console_start():2494] atexit reg
+2025-08-28 16:46:11,681 INFO    MainThread:229720 [wandb_run.py:_redirect():2342] redirect: wrap_raw
+2025-08-28 16:46:11,681 INFO    MainThread:229720 [wandb_run.py:_redirect():2411] Wrapping output streams.
+2025-08-28 16:46:11,681 INFO    MainThread:229720 [wandb_run.py:_redirect():2434] Redirects installed.
+2025-08-28 16:46:11,682 INFO    MainThread:229720 [wandb_init.py:init():1075] run started, returning control to user process
+2025-08-28 16:47:42,785 INFO    MsgRouterThr:229720 [mailbox.py:close():129] [no run ID] Closing mailbox, abandoning 1 handles.

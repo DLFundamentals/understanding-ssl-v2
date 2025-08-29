@@ -1,0 +1,217 @@
+Dataset: cifar100
+100%|████████████████████████████████████████████████████████████████████████████████████| 169M/169M [00:04<00:00, 41.3MB/s]
+Setting up Decoupled Contrastive Learning
+Setting up Negatives-only Supervised Contrastive Learning
+Setting up Supervised Contrastive Learning
+[GPU 0] Training epoch 0...
+  4%|███▋                                                                                    | 2/48 [00:05<02:02,  2.67s/it]/home/priyadarsimishra/understanding_ssl_v2/utils/optimizer.py:142: UserWarning: This overload of add_ is deprecated:
+🧮 Accumulative batch loss at batch idx 0 for DCL model: 8.624626159667969
+🧮 Accumulative batch loss at batch idx 0 for NSCL model: 8.613523483276367
+🧮 Accumulative batch loss at batch idx 0 for SCL model: 9.04513931274414
+🧮 Accumulative batch loss at batch idx 1 for DCL model: 17.15741539001465
+🧮 Accumulative batch loss at batch idx 1 for NSCL model: 17.13510513305664
+🧮 Accumulative batch loss at batch idx 1 for SCL model: 18.084501266479492
+	add_(Number alpha, Tensor other)
+Consider using one of the following signatures instead:
+	add_(Tensor other, *, Number alpha = 1) (Triggered internally at /pytorch/torch/csrc/utils/python_arg_parser.cpp:1691.)
+  next_v.mul_(momentum).add_(scaled_lr, grad)
+🧮 Accumulative batch loss at batch idx 2 for DCL model: 25.863396644592285
+🧮 Accumulative batch loss at batch idx 2 for NSCL model: 25.829822540283203
+🧮 Accumulative batch loss at batch idx 2 for SCL model: 27.140949249267578
+ 27%|███████████████████████▌                                                               | 13/48 [00:19<00:43,  1.23s/it]
+🧮 Accumulative batch loss at batch idx 3 for DCL model: 34.57705211639404
+🧮 Accumulative batch loss at batch idx 3 for NSCL model: 34.531922340393066
+🧮 Accumulative batch loss at batch idx 3 for SCL model: 36.001773834228516
+🧮 Accumulative batch loss at batch idx 4 for DCL model: 43.01595687866211
+🧮 Accumulative batch loss at batch idx 4 for NSCL model: 42.95969772338867
+🧮 Accumulative batch loss at batch idx 4 for SCL model: 44.592498779296875
+🧮 Accumulative batch loss at batch idx 5 for DCL model: 51.45258903503418
+🧮 Accumulative batch loss at batch idx 5 for NSCL model: 51.388816833496094
+🧮 Accumulative batch loss at batch idx 5 for SCL model: 53.11670780181885
+🧮 Accumulative batch loss at batch idx 6 for DCL model: 59.67600059509277
+🧮 Accumulative batch loss at batch idx 6 for NSCL model: 59.61065673828125
+🧮 Accumulative batch loss at batch idx 6 for SCL model: 61.505669593811035
+🧮 Accumulative batch loss at batch idx 7 for DCL model: 67.82176876068115
+🧮 Accumulative batch loss at batch idx 7 for NSCL model: 67.73494911193848
+🧮 Accumulative batch loss at batch idx 7 for SCL model: 69.7535924911499
+🧮 Accumulative batch loss at batch idx 8 for DCL model: 75.9075517654419
+🧮 Accumulative batch loss at batch idx 8 for NSCL model: 75.8156795501709
+🧮 Accumulative batch loss at batch idx 8 for SCL model: 77.98117351531982
+🧮 Accumulative batch loss at batch idx 9 for DCL model: 83.95446491241455
+🧮 Accumulative batch loss at batch idx 9 for NSCL model: 83.86429500579834
+🧮 Accumulative batch loss at batch idx 9 for SCL model: 86.15370655059814
+🧮 Accumulative batch loss at batch idx 10 for DCL model: 92.05580520629883
+🧮 Accumulative batch loss at batch idx 10 for NSCL model: 91.91864109039307
+🧮 Accumulative batch loss at batch idx 10 for SCL model: 94.33092975616455
+🧮 Accumulative batch loss at batch idx 11 for DCL model: 100.04832029342651
+🧮 Accumulative batch loss at batch idx 11 for NSCL model: 99.86151504516602
+🧮 Accumulative batch loss at batch idx 11 for SCL model: 102.4630937576294
+🧮 Accumulative batch loss at batch idx 12 for DCL model: 108.0137095451355
+🧮 Accumulative batch loss at batch idx 12 for NSCL model: 107.82315921783447
+🧮 Accumulative batch loss at batch idx 12 for SCL model: 110.58091354370117
+🧮 Accumulative batch loss at batch idx 13 for DCL model: 116.00644016265869
+🧮 Accumulative batch loss at batch idx 13 for NSCL model: 115.77493095397949
+🧮 Accumulative batch loss at batch idx 13 for SCL model: 118.69357967376709
+🧮 Accumulative batch loss at batch idx 14 for DCL model: 123.89750003814697
+🧮 Accumulative batch loss at batch idx 14 for NSCL model: 123.64913606643677
+🧮 Accumulative batch loss at batch idx 14 for SCL model: 126.8118028640747
+🧮 Accumulative batch loss at batch idx 15 for DCL model: 131.83952474594116
+🧮 Accumulative batch loss at batch idx 15 for NSCL model: 131.5800747871399
+🧮 Accumulative batch loss at batch idx 15 for SCL model: 134.90462112426758
+🧮 Accumulative batch loss at batch idx 16 for DCL model: 139.72215032577515
+🧮 Accumulative batch loss at batch idx 16 for NSCL model: 139.4999122619629
+🧮 Accumulative batch loss at batch idx 16 for SCL model: 142.98851013183594
+🧮 Accumulative batch loss at batch idx 17 for DCL model: 147.58464670181274
+🧮 Accumulative batch loss at batch idx 17 for NSCL model: 147.38383531570435
+🧮 Accumulative batch loss at batch idx 17 for SCL model: 151.07454586029053
+🧮 Accumulative batch loss at batch idx 18 for DCL model: 155.46492433547974
+🧮 Accumulative batch loss at batch idx 18 for NSCL model: 155.2501769065857
+🧮 Accumulative batch loss at batch idx 18 for SCL model: 159.15365314483643
+🧮 Accumulative batch loss at batch idx 19 for DCL model: 163.36378288269043
+🧮 Accumulative batch loss at batch idx 19 for NSCL model: 163.10289335250854
+🧮 Accumulative batch loss at batch idx 19 for SCL model: 167.2310028076172
+🧮 Accumulative batch loss at batch idx 20 for DCL model: 171.27344942092896
+🧮 Accumulative batch loss at batch idx 20 for NSCL model: 170.93874216079712
+🧮 Accumulative batch loss at batch idx 20 for SCL model: 175.30752849578857
+🧮 Accumulative batch loss at batch idx 21 for DCL model: 179.19378471374512
+🧮 Accumulative batch loss at batch idx 21 for NSCL model: 178.7854232788086
+🧮 Accumulative batch loss at batch idx 21 for SCL model: 183.3631076812744
+🧮 Accumulative batch loss at batch idx 22 for DCL model: 187.07910346984863
+🧮 Accumulative batch loss at batch idx 22 for NSCL model: 186.63731908798218
+🧮 Accumulative batch loss at batch idx 22 for SCL model: 191.4211549758911
+🧮 Accumulative batch loss at batch idx 23 for DCL model: 195.02055597305298
+🧮 Accumulative batch loss at batch idx 23 for NSCL model: 194.49549436569214
+🧮 Accumulative batch loss at batch idx 23 for SCL model: 199.49227809906006
+🧮 Accumulative batch loss at batch idx 24 for DCL model: 202.8910231590271
+🧮 Accumulative batch loss at batch idx 24 for NSCL model: 202.37269020080566
+🧮 Accumulative batch loss at batch idx 24 for SCL model: 207.5382843017578
+🧮 Accumulative batch loss at batch idx 25 for DCL model: 210.73018598556519
+🧮 Accumulative batch loss at batch idx 25 for NSCL model: 210.222806930542
+🧮 Accumulative batch loss at batch idx 25 for SCL model: 215.59152221679688
+🧮 Accumulative batch loss at batch idx 26 for DCL model: 218.5510687828064
+🧮 Accumulative batch loss at batch idx 26 for NSCL model: 218.07382154464722
+🧮 Accumulative batch loss at batch idx 26 for SCL model: 223.64409637451172
+🧮 Accumulative batch loss at batch idx 27 for DCL model: 226.43106889724731
+🧮 Accumulative batch loss at batch idx 27 for NSCL model: 225.9141755104065
+🧮 Accumulative batch loss at batch idx 27 for SCL model: 231.68907737731934
+🧮 Accumulative batch loss at batch idx 28 for DCL model: 234.23919916152954
+🧮 Accumulative batch loss at batch idx 28 for NSCL model: 233.75634813308716
+🧮 Accumulative batch loss at batch idx 28 for SCL model: 239.73830699920654
+🧮 Accumulative batch loss at batch idx 29 for DCL model: 242.09726810455322
+🧮 Accumulative batch loss at batch idx 29 for NSCL model: 241.6079888343811
+🧮 Accumulative batch loss at batch idx 29 for SCL model: 247.7893762588501
+🧮 Accumulative batch loss at batch idx 30 for DCL model: 249.95035409927368
+🧮 Accumulative batch loss at batch idx 30 for NSCL model: 249.3891806602478
+🧮 Accumulative batch loss at batch idx 30 for SCL model: 255.82549571990967
+🧮 Accumulative batch loss at batch idx 31 for DCL model: 257.73579454421997
+🧮 Accumulative batch loss at batch idx 31 for NSCL model: 257.19772005081177
+🧮 Accumulative batch loss at batch idx 31 for SCL model: 263.8697385787964
+🧮 Accumulative batch loss at batch idx 32 for DCL model: 265.55887269973755
+🧮 Accumulative batch loss at batch idx 32 for NSCL model: 265.0089430809021
+🧮 Accumulative batch loss at batch idx 32 for SCL model: 271.91689014434814
+🧮 Accumulative batch loss at batch idx 33 for DCL model: 273.2614645957947
+🧮 Accumulative batch loss at batch idx 33 for NSCL model: 272.7614641189575
+🧮 Accumulative batch loss at batch idx 33 for SCL model: 279.95147037506104
+🧮 Accumulative batch loss at batch idx 34 for DCL model: 281.0612955093384
+🧮 Accumulative batch loss at batch idx 34 for NSCL model: 280.51974725723267
+🧮 Accumulative batch loss at batch idx 34 for SCL model: 287.9888572692871
+🧮 Accumulative batch loss at batch idx 35 for DCL model: 288.8965468406677
+🧮 Accumulative batch loss at batch idx 35 for NSCL model: 288.33114671707153
+🧮 Accumulative batch loss at batch idx 35 for SCL model: 296.03291511535645
+🧮 Accumulative batch loss at batch idx 36 for DCL model: 296.69582414627075
+🧮 Accumulative batch loss at batch idx 36 for NSCL model: 296.159939289093
+🧮 Accumulative batch loss at batch idx 36 for SCL model: 304.0881977081299
+🧮 Accumulative batch loss at batch idx 37 for DCL model: 304.4643769264221
+🧮 Accumulative batch loss at batch idx 37 for NSCL model: 303.9891724586487
+🧮 Accumulative batch loss at batch idx 37 for SCL model: 312.14451694488525
+🧮 Accumulative batch loss at batch idx 38 for DCL model: 312.24362993240356
+🧮 Accumulative batch loss at batch idx 38 for NSCL model: 311.7740087509155
+🧮 Accumulative batch loss at batch idx 38 for SCL model: 320.18065643310547
+🧮 Accumulative batch loss at batch idx 39 for DCL model: 319.94476413726807
+🧮 Accumulative batch loss at batch idx 39 for NSCL model: 319.5432605743408
+🧮 Accumulative batch loss at batch idx 39 for SCL model: 328.20793533325195
+🧮 Accumulative batch loss at batch idx 40 for DCL model: 327.652391910553
+🧮 Accumulative batch loss at batch idx 40 for NSCL model: 327.24050092697144
+🧮 Accumulative batch loss at batch idx 40 for SCL model: 336.2395439147949
+🧮 Accumulative batch loss at batch idx 41 for DCL model: 335.37139081954956
+🧮 Accumulative batch loss at batch idx 41 for NSCL model: 334.9871816635132
+🧮 Accumulative batch loss at batch idx 41 for SCL model: 344.2852096557617
+🧮 Accumulative batch loss at batch idx 42 for DCL model: 343.1175093650818
+🧮 Accumulative batch loss at batch idx 42 for NSCL model: 342.7593803405762
+🧮 Accumulative batch loss at batch idx 42 for SCL model: 352.3088970184326
+🧮 Accumulative batch loss at batch idx 43 for DCL model: 350.80560064315796
+🧮 Accumulative batch loss at batch idx 43 for NSCL model: 350.46686029434204
+🧮 Accumulative batch loss at batch idx 43 for SCL model: 360.336519241333
+🧮 Accumulative batch loss at batch idx 44 for DCL model: 358.5935654640198
+🧮 Accumulative batch loss at batch idx 44 for NSCL model: 358.2591757774353
+🧮 Accumulative batch loss at batch idx 44 for SCL model: 368.35721588134766
+🧮 Accumulative batch loss at batch idx 45 for DCL model: 366.31839084625244
+🧮 Accumulative batch loss at batch idx 45 for NSCL model: 365.9867777824402
+🧮 Accumulative batch loss at batch idx 45 for SCL model: 376.4018440246582
+🧮 Accumulative batch loss at batch idx 46 for DCL model: 374.06871223449707
+🧮 Accumulative batch loss at batch idx 46 for NSCL model: 373.6809639930725
+🧮 Accumulative batch loss at batch idx 46 for SCL model: 384.4358024597168
+🧮 Accumulative batch loss at batch idx 47 for DCL model: 381.77372789382935
+🧮 Accumulative batch loss at batch idx 47 for NSCL model: 381.4098391532898
+🧮 Accumulative batch loss at batch idx 47 for SCL model: 392.4561233520508
+Saved dcl model to checkpoints/cifar100_parallel//dcl/snapshot_0.pth at epoch 0
+Saved nscl model to checkpoints/cifar100_parallel//nscl/snapshot_0.pth at epoch 0
+Saved scl model to checkpoints/cifar100_parallel//scl/snapshot_0.pth at epoch 0
+Saved all models at epoch 0
+DCL Loss per epoch: 7.953619331121445
+NSCL Loss per epoch: 7.946038315693538
+SCL Loss per epoch: 8.176169236501059
+Extracting Features: 100%|██████████████████████████████████████████████████████████████████| 10/10 [00:02<00:00,  3.66it/s]
+Extracting Features: 100%|██████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.36it/s]
+Evaluation accuracies: [0.07129999995231628]
+CDNV: 17.452556610107422, Dir-CDNV: 5.814472198486328
+Extracting Features: 100%|██████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.28it/s]
+Extracting Features: 100%|██████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.14it/s]
+Evaluation accuracies: [0.07199999690055847]
+CDNV: 17.616975784301758, Dir-CDNV: 5.87638521194458
+Extracting Features: 100%|██████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.18it/s]
+Extracting Features: 100%|██████████████████████████████████████████████████████████████████| 10/10 [00:01<00:00,  5.17it/s]
+Evaluation accuracies: [0.09349999576807022]
+CDNV: 17.079097747802734, Dir-CDNV: 4.648571014404297
+[GPU 0] Training epoch 1...
+ 73%|███████████████████████████████████████████████████████████████▍                       | 35/48 [00:44<00:16,  1.28s/it]
+Traceback (most recent call last):
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 468, in <module>
+    trainer.train(epochs)
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 173, in train
+    losses_per_epoch = self._run_epoch(epoch)
+  File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 151, in _run_epoch
+    loss = model_config.train_step(batch, self.gpu_id)
+  File "/home/priyadarsimishra/understanding_ssl_v2/models/model_config.py", line 21, in train_step
+    loss = self.model.module.run_one_batch(batch, self.criterion, gpu_id)
+  File "/home/priyadarsimishra/understanding_ssl_v2/models/simclr.py", line 73, in run_one_batch
+    loss = criterion(view1_proj, view2_proj, labels)
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/priyadarsimishra/understanding_ssl_v2/utils/losses.py", line 166, in forward
+    self.mask = self.mask_correlated_samples(self.batch_size, labels)
+  File "/home/priyadarsimishra/understanding_ssl_v2/utils/losses.py", line 148, in mask_correlated_samples
+    mask[batch_size + i, i] = 0
+KeyboardInterrupt
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 468, in <module>
+[rank0]:     trainer.train(epochs)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 173, in train
+[rank0]:     losses_per_epoch = self._run_epoch(epoch)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/scripts/parallel_dcl_nscl_train_simclr.py", line 151, in _run_epoch
+[rank0]:     loss = model_config.train_step(batch, self.gpu_id)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/models/model_config.py", line 21, in train_step
+[rank0]:     loss = self.model.module.run_one_batch(batch, self.criterion, gpu_id)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/models/simclr.py", line 73, in run_one_batch
+[rank0]:     loss = criterion(view1_proj, view2_proj, labels)
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1773, in _wrapped_call_impl
+[rank0]:     return self._call_impl(*args, **kwargs)
+[rank0]:   File "/home/priyadarsimishra/anaconda3/envs/contrastive/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1784, in _call_impl
+[rank0]:     return forward_call(*args, **kwargs)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/utils/losses.py", line 166, in forward
+[rank0]:     self.mask = self.mask_correlated_samples(self.batch_size, labels)
+[rank0]:   File "/home/priyadarsimishra/understanding_ssl_v2/utils/losses.py", line 148, in mask_correlated_samples
+[rank0]:     mask[batch_size + i, i] = 0
+[rank0]: KeyboardInterrupt
