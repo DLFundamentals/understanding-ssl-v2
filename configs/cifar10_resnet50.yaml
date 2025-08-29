@@ -31,8 +31,8 @@ loss:
 
 evaluation:
   checkpoints_dir: "checkpoints/cifar10_parallel/"
-  perform_rsa: False
-  perform_cka: False
+  perform_rsa: True
+  perform_cka: True
   perform_cdnv: True
   perform_nccc: True
   perform_linear: False

@@ -200,13 +200,79 @@ class ParallelTrainer:
 
         print("Training complete! 🎉")
 
+    def _compute_cka(self, model_features, eval_outputs):
+        print("--- Starting CKA Computation ---")
+
+        embed_layer = 0 # 0 for h, 1 for g(h)
+        cka_sample_size = 10000
+        cka = CenteredKernelAlignment()
+        print(f"Subsampling {cka_sample_size} images for CKA calculation due to memory constraints.")
+
+        dcl_features = model_features['dcl'][embed_layer]
+        num_samples = dcl_features.shape[0]
+
+        indices = torch.randperm(num_samples)[:cka_sample_size]
+        sub_dcl_features = dcl_features[indices]
+
+        for model_name in self.models_config.keys():
+            if model_name != "dcl":
+                print(f"Computing CKA for {model_name}...")
+                other_features = model_features[model_name][embed_layer]
+                sub_other_features = other_features[indices]
+                
+                try:
+                    cka_score = cka.cka_linear_kernel(sub_dcl_features, sub_other_features, device=self.settings.device)
+                    print(f"\nCKA (Linear Kernel) between DCL and {model_name.upper()} features: {cka_score:.4f}")
+                    eval_outputs[model_name]['CKA'] = cka_score
+                except Exception as e:
+                    print(f"Error computing CKA for {model_name}: {e}")
+                    eval_outputs[model_name]['CKA'] = None
+        
+        print("\n--- CKA Computation Complete ---")
+
+    def _compute_rsa(self, model_features, eval_outputs):
+        print(f"\n=== Starting RSA Computation ===")
+
+        embed_layer = 0 # 0 for h, 1 for g(h)
+        rsa = RepresentationSimilarityAnalysis("cosine")
+
+        dcl_features = model_features['dcl'][embed_layer]
+        dcl_rdm = rsa.compute_rdm(dcl_features, chunk_size=1024)
+
+        for model_name in self.models_config.keys():
+            if model_name != "dcl":
+                other_model_features = model_features[model_name][embed_layer]
+                other_rdm = rsa.compute_rdm(other_model_features, chunk_size=1024)
+
+                # Compute the RSA between the two RDMs
+                rsa_pearson_score, p_value = rsa.compute_rsa(dcl_rdm, other_rdm, correlation_type='pearson')
+                print(f"\nRSA (Pearson) Correlation between DCL and {model_name} features: {rsa_pearson_score:.4f} with p-value: {p_value:.4e}")
+
+                eval_outputs[model_name]['RSA'] = rsa_pearson_score
+                eval_outputs[model_name]['p-value'] = p_value
+
+        print("\n--- RSA Computation Complete ---")
+
     def _run_evaluation(self):
         eval_outputs = {}
-        
-        for name, model_config in self.models_config.items():
+        model_features = {}
+
+        print(f"\n=== Starting Evaluation ===")
+        for model_name, model_config in self.models_config.items():
             model_config.model.eval()
-            eval_outputs[name] = self._evaluate_single_model(model_config.model)
+
+            extractor = FeatureExtractor(model_config.model)
+            features, labels = extractor.extract_features(self.test_loader)
+            model_features[model_name] = features
+
+            eval_outputs[model_name] = self._evaluate_single_model(model_config.model)
             model_config.model.train()
+
+        if self.perform_rsa and len(self.models_config) >= 2:
+            self._compute_rsa(model_features, eval_outputs)
+
+        if self.perform_cka and len(self.models_config) >= 2:
+            self._compute_cka(model_features, eval_outputs)
 
         return eval_outputs
 
@@ -243,10 +309,10 @@ class ParallelTrainer:
             eval_outputs['CDNV'] = cdnv
             eval_outputs['d-CDNV'] = dir_cdnv
             print(f'CDNV: {cdnv}, Dir-CDNV: {dir_cdnv}')
-        if self.perform_rsa:
-            pass # TODO
-        if self.perform_cka:
-            pass # TODO
+        # if self.perform_rsa:
+        #     pass # TODO
+        # if self.perform_cka:
+        #     pass # TODO
         return eval_outputs
     
     def log_metrics(self, eval_outputs, cur_epoch):
@@ -266,7 +332,7 @@ class ParallelTrainer:
             "epoch": cur_epoch,
             "learning_rate": list(self.models_config.values())[0].optimizer.param_groups[0]["lr"]
         }
-        
+
         # Log metrics for all models
         for model_name, outputs in eval_outputs.items():
             log_data[f"{model_name}_loss"] = outputs['Loss']
@@ -278,10 +344,12 @@ class ParallelTrainer:
                 log_data[f"{model_name}_cdnv"] = torch.log10(torch.tensor(outputs["CDNV"]))
                 log_data[f"{model_name}_d_cdnv"] = torch.log10(torch.tensor(outputs["d-CDNV"]))
             
-            if self.perform_rsa:
-                pass # TODO
-            if self.perform_cka:
-                pass # TODO
+            if self.perform_rsa and "RSA" in outputs:
+                log_data[f"{model_name}_rsa"] = float(outputs["RSA"]) # convert from np.float to float
+                log_data[f"{model_name}_p_value"] = float(outputs["p-value"])
+
+            if self.perform_cka and "CKA" in outputs and outputs["CKA"] is not None:
+                log_data[f"{model_name}_cka"] = float(outputs["CKA"])
         
         wandb.log(log_data)
 
@@ -423,6 +491,8 @@ if __name__ == "__main__":
             settings=settings,
             perform_cdnv=perform_cdnv,
             perform_nccc=perform_nccc,
+            perform_rsa=perform_rsa,
+            perform_cka=perform_cka,
             total_epochs=epochs
         )
     else:
