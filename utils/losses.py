@@ -319,6 +319,30 @@ class HybridSupConLoss(nn.Module):
         loss = -mean_log_prob_pos
         loss = loss[~torch.isnan(loss) & ~torch.isinf(loss)].mean()
         return loss
+    
+class MultiViewCrossEntropyLoss(nn.Module):
+    def __init__(self, proj_dim, num_output_classes, device="cuda"):
+        super().__init__()
+        self.classifier = nn.Linear(proj_dim, num_output_classes)
+        self.device = device
+        self.criterion = nn.CrossEntropyLoss(reduction="sum")
+
+    def forward(self, z_i, z_j, labels):
+        # Distributed version
+        if dist.is_initialized():
+            z_i = torch.cat(GatherLayer.apply(z_i), dim=0)
+            z_j = torch.cat(GatherLayer.apply(z_j), dim=0)
+            labels = torch.cat(GatherLayer.apply(labels), dim=0)
+
+        # Shape: [2N, d], labels: [2N]
+        z = torch.cat([z_i, z_j], dim=0)
+        labels = torch.cat([labels, labels], dim=0)
+        N = z.size(0)
+
+        logits = self.classifier(z)
+        loss = self.criterion(logits, labels)
+        loss /= N
+        return loss
 
 class LossFactory:
     @staticmethod
