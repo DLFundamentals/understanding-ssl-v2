@@ -9,6 +9,9 @@ class BatchNorm1dNoBias(nn.BatchNorm1d):
 class SimCLR_Projector(nn.Module):
     def __init__(self, input_dim, hidden_dim=512, projection_dim=128):
         super().__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.projection_dim = projection_dim
         torch.manual_seed(42)
         
         self.projector = nn.Sequential(

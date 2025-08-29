@@ -321,9 +321,8 @@ class HybridSupConLoss(nn.Module):
         return loss
     
 class MultiViewCrossEntropyLoss(nn.Module):
-    def __init__(self, proj_dim, num_output_classes, device="cuda"):
+    def __init__(self, temperature=None,device="cuda"):
         super().__init__()
-        self.classifier = nn.Linear(proj_dim, num_output_classes)
         self.device = device
         self.criterion = nn.CrossEntropyLoss(reduction="sum")
 

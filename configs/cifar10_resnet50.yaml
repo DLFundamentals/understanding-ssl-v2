@@ -15,7 +15,7 @@ training:
   augment_both: True
   save_every: 100
   log_every: 10
-  track_performance: True
+  track_performance: False
   multi_gpu: False
   world_size: 1
 
