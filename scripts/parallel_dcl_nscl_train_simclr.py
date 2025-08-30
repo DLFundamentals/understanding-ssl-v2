@@ -132,6 +132,19 @@ class ParallelTrainer:
         self.optimizer.load_state_dict(snapshot["OPTIMIZER"])
         self.scheduler.load_state_dict(snapshot["SCHEDULER"])
     
+    def save_snapshot(self, epoch: int) -> None:
+        snapshot = {
+            "MODEL_STATE": self.model.module.state_dict(),
+            "EPOCHS_RUN": epoch,
+            "OPTIMIZER": self.optimizer.state_dict(),
+            "SCHEDULER": self.scheduler.state_dict()
+        }
+        model_snapshot_dir = f'{self.snapshot_dir}/{self.name}'
+        os.makedirs(model_snapshot_dir, exist_ok=True)
+        snapshot_path = os.path.join(model_snapshot_dir, f"snapshot_{epoch}.pth")
+        torch.save(snapshot, snapshot_path)
+        print(f"Saved {self.name} model to {snapshot_path} at epoch {epoch}")
+
     def _run_epoch(self, epoch: int) -> dict:
         print(f"[GPU {self.gpu_id}] Training epoch {epoch}...")
         

@@ -43,8 +43,8 @@ class ModelConfig:
         torch.cuda.synchronize()
         
         return loss.item()
-    
-    def save_snapshot(self, epoch, snapshot_dir):
+
+    def save_snapshot(self, epoch: int, snapshot_dir: str) -> None:
         snapshot = {
             "MODEL_STATE": self.model.module.state_dict(),
             "EPOCHS_RUN": epoch,
