@@ -396,6 +396,7 @@ if __name__ == "__main__":
             effective_lr=effective_lr,
             total_epochs=epochs,
             gpu_id=int(os.environ.get('LOCAL_RANK')),
+            num_output_classes=num_output_classes,
             # SimCLR specific parameters
             dataset=dataset_name,
             width_multiplier=width_multiplier,
