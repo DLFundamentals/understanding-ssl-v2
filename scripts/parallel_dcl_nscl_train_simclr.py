@@ -190,7 +190,7 @@ class ParallelTrainer:
                 # Save snapshots for all models
                 if epoch % self.save_every == 0 or (epoch < 100 and epoch % 10 == 0):
                     for model_config in self.models_config.values():
-                        model_config.save_snapshot(epoch)
+                        model_config.save_snapshot(epoch, self.snapshot_dir)
                     print(f"Saved all models at epoch {epoch}")
 
                 # Evaluate and log performance

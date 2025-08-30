@@ -24,16 +24,14 @@ class ModelConfig:
         view1, view2 = view1.to(gpu_id), view2.to(gpu_id)
         labels = labels.to(gpu_id)
         
-        torch.autograd.set_detect_anomaly(True)
         with autocast(device_type='cuda'):
-            breakpoint()
             if self.name == 'ce':
-                logits1 = self.model(view1, mode='train')
-                logits2 = self.model(view2, mode='train')
+                logits1 = self.model.module(view1, mode='train')
+                logits2 = self.model.module(view2, mode='train')
                 loss = self.criterion(logits1, logits2, labels)
             else:
-                view1_features, view1_proj = self.model(view1)
-                view2_features, view2_proj = self.model(view2)
+                view1_features, view1_proj = self.model.module(view1)
+                view2_features, view2_proj = self.model.module(view2)
                 loss = self.criterion(view1_proj, view2_proj, labels)
         
         self.scaler.scale(loss).backward()
@@ -44,3 +42,16 @@ class ModelConfig:
         torch.cuda.synchronize()
         
         return loss.item()
+
+    def save_snapshot(self, epoch: int, snapshot_dir: str) -> None:
+        snapshot = {
+            "MODEL_STATE": self.model.module.state_dict(),
+            "EPOCHS_RUN": epoch,
+            "OPTIMIZER": self.optimizer.state_dict(),
+            "SCHEDULER": self.scheduler.state_dict()
+        }
+        model_snapshot_dir = f'{snapshot_dir}/{self.name}'
+        os.makedirs(model_snapshot_dir, exist_ok=True)
+        snapshot_path = os.path.join(model_snapshot_dir, f"snapshot_{epoch}.pth")
+        torch.save(snapshot, snapshot_path)
+        print(f"Saved {self.name} model to {snapshot_path} at epoch {epoch}")
