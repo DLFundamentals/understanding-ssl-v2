@@ -16,9 +16,24 @@ class ModelConfig:
     
     def train_step(self, batch, gpu_id):
         self.optimizer.zero_grad()
+        # get the inputs
+        view1, view2, labels = batch
+        # skip the batch with only 1 image
+        if view1.size(0) < 2:
+            return 0
+        view1, view2 = view1.to(gpu_id), view2.to(gpu_id)
+        labels = labels.to(gpu_id)
         
+        torch.autograd.set_detect_anomaly(True)
         with autocast(device_type='cuda'):
-            loss = self.model.module.run_one_batch(batch, self.criterion, gpu_id)
+            if self.name == 'ce':
+                logits1 = self.model.module(view1, mode='train')
+                logits2 = self.model.module(view2, mode='train')
+                loss = self.criterion(logits1, logits2, labels)
+            else:
+                view1_features, view1_proj = self.model.module(view1)
+                view2_features, view2_proj = self.model.module(view2)
+                loss = self.criterion(view1_proj, view2_proj, labels)
         
         self.scaler.scale(loss).backward()
         self.scaler.unscale_(self.optimizer)
