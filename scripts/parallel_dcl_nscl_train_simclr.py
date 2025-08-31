@@ -262,7 +262,7 @@ class ParallelTrainer:
             model_config.model.eval()
 
             extractor = FeatureExtractor(model_config.model)
-            features, labels = extractor.extract_features(self.test_loader)
+            features, labels = extractor.extract_features(self.train_loader)
             model_features[model_name] = features
 
             eval_outputs[model_name] = self._evaluate_single_model(model_config.model)
