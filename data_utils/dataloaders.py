@@ -84,7 +84,7 @@ def get_dataset(
             augment_both_views=False, dataset_name=dataset_name
         )
         test_loader = DataLoader(
-            test_dataset, batch_size=effective_bs, shuffle=True,
+            test_dataset, batch_size=effective_bs, shuffle=False,
             num_workers=num_workers, pin_memory=True
         )
         return train_dataset, train_loader, test_dataset, test_loader, labels_train, labels_test

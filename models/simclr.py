@@ -55,21 +55,29 @@ class SimCLR(nn.Module):
 
         return h, F.normalize(g_h, dim = -1)
 
-    # ========== Run One Batch =================
-    def run_one_batch(self, batch, criterion, device='cuda'):
-        # get the inputs
-        view1, view2, labels = batch
-        # skip the batch with only 1 image
-        if view1.size(0) < 2:
-            return 0
-        view1, view2 = view1.to(device), view2.to(device)
-        labels = labels.to(device)
+class SimCLRWithClassificationHead(nn.Module):
+    """
+    A supervised model that wraps a SimCLR-style architecture (encoder + projector).
+    - During training, it passes the projector's output through a classifier.
+    - During evaluation, it returns the encoder and projector outputs directly.
+    """
+    def __init__(self, simclr_model: SimCLR, num_classes: int):
+        super().__init__()
+        self.simclr_model = simclr_model
+        
+        # Get the projector's output dimension for the classifier input
+        projector_output_dim = self.simclr_model.projector.projection_dim
+        self.classifier = nn.Linear(projector_output_dim, num_classes)
 
-        # forward pass
-        view1_features, view1_proj = self(view1)
-        view2_features, view2_proj = self(view2)
-
-        # compute contrastive loss
-        loss = criterion(view1_proj, view2_proj, labels)
-
-        return loss
+    def forward(self, x, mode='eval'):
+        # Always get the base representations from the SimCLR architecture
+        h, g_h = self.simclr_model(x)
+        
+        # Mode-dependent output
+        if mode == 'train':
+            # During training, return logits for the loss function
+            logits = self.classifier(g_h)
+            return logits
+        else:
+            # During evaluation, return representations for downstream tasks
+            return h, g_h

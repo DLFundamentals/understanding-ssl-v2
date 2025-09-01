@@ -36,7 +36,7 @@ from eval_utils.feature_extractor import FeatureExtractor
 from eval_utils.nccc_utils import NCCCEvaluator
 from eval_utils.geometry import GeometricEvaluator
 from eval_utils.similarity_metrics import CenteredKernelAlignment, RepresentationSimilarityAnalysis
-
+from utils.losses import NTXentLoss, DecoupledNTXentLoss, NegSupConLoss, SupConLoss, HybridSupConLoss
 from utils.optimizer import LARS
 
 # model
@@ -92,7 +92,7 @@ class ParallelTrainer:
         self.log_every = log_every
         self.epochs_run = 0
         self.snapshot_dir = snapshot_dir
-
+        
         self.models_config = models_config
 
         self.track_performance = kwargs.get("track_performance", False)
@@ -132,6 +132,19 @@ class ParallelTrainer:
         self.optimizer.load_state_dict(snapshot["OPTIMIZER"])
         self.scheduler.load_state_dict(snapshot["SCHEDULER"])
     
+    def save_snapshot(self, epoch: int) -> None:
+        snapshot = {
+            "MODEL_STATE": self.model.module.state_dict(),
+            "EPOCHS_RUN": epoch,
+            "OPTIMIZER": self.optimizer.state_dict(),
+            "SCHEDULER": self.scheduler.state_dict()
+        }
+        model_snapshot_dir = f'{self.snapshot_dir}/{self.name}'
+        os.makedirs(model_snapshot_dir, exist_ok=True)
+        snapshot_path = os.path.join(model_snapshot_dir, f"snapshot_{epoch}.pth")
+        torch.save(snapshot, snapshot_path)
+        print(f"Saved {self.name} model to {snapshot_path} at epoch {epoch}")
+
     def _run_epoch(self, epoch: int) -> dict:
         print(f"[GPU {self.gpu_id}] Training epoch {epoch}...")
         
@@ -164,14 +177,12 @@ class ParallelTrainer:
         return {name: loss / num_batches for name, loss in losses_per_epoch.items()}
 
     def train(self, max_epochs: int) -> None:
-        # Set all models to training mode
+        # Initialize loss tracking
+        losses_per_epoch = {name: 8.0 for name in self.models_config.keys()} # dummy loss value
+        # # Set all models to training mode
         for model_config in self.models_config.values():
             model_config.model.train()
-
         for epoch in range(self.epochs_run, max_epochs):
-            # Run one epoch
-            losses_per_epoch = self._run_epoch(epoch)
-            
             # On GPU 0 do extra logging, snapshot saving, and evaluation
             if self.gpu_id == 0:
                 # Save snapshots for all models
@@ -193,13 +204,69 @@ class ParallelTrainer:
                             eval_outputs[name]['Loss'] = loss
                         
                         self.log_metrics(eval_outputs, epoch)
-
-            # Barrier for distributed training
-            if dist.get_world_size() > 1:
-                dist.barrier()
+            # Run one epoch
+            losses_per_epoch = self._run_epoch(epoch)
 
         print("Training complete! 🎉")
 
+    def _run_evaluation(self):
+        eval_outputs = {}
+        model_features = {}
+        model_labels = {}
+
+        print(f"\n=== Starting Evaluation ===")
+        for model_name, model_config in self.models_config.items():
+            model_config.model.eval()
+
+            with torch.no_grad():
+                extractor = FeatureExtractor(model_config.model)
+                features, labels = extractor.extract_features(self.test_loader)
+            model_features[model_name] = features
+            model_labels[model_name] = labels
+
+            eval_outputs[model_name] = self._evaluate_single_model(model_features[model_name], model_labels[model_name])
+            model_config.model.train()
+
+        if self.perform_rsa and len(self.models_config) >= 2:
+            self._compute_rsa(model_features, eval_outputs)
+
+        if self.perform_cka and len(self.models_config) >= 2:
+            self._compute_cka(model_features, eval_outputs)
+
+        return eval_outputs
+
+    @torch.no_grad
+    def _evaluate_single_model(self, test_features, test_labels):
+        """
+        Extracts features and computes all specified metrics for a single model.
+        Return eval_outputs dictionary
+        """
+        # 2. Compute specified metrics
+        eval_outputs = defaultdict()
+        embedding_layer = 0 # 0 for h, 1 for g(h)
+        if self.perform_nccc:
+            evaluator = NCCCEvaluator(device=device)
+            centers, selected_classes = evaluator.compute_class_centers(
+                test_features[embedding_layer], test_labels,
+                n_shot=100,
+                repeat=1,
+                selected_classes=None
+            )
+
+            nccc_accs = evaluator.evaluate(
+                test_features[embedding_layer], test_labels, centers, selected_classes
+            )
+            eval_outputs['NCCC'] = nccc_accs[0]
+            print(f"Evaluation accuracies: {nccc_accs}")
+        if self.perform_cdnv:
+            evaluator = GeometricEvaluator(self.settings.num_output_classes)
+            cdnv = evaluator.compute_cdnv(test_features[embedding_layer], test_labels)
+            dir_cdnv = evaluator.compute_directional_cdnv(test_features[embedding_layer], test_labels)
+            eval_outputs['CDNV'] = cdnv
+            eval_outputs['d-CDNV'] = dir_cdnv
+            print(f'CDNV: {cdnv}, Dir-CDNV: {dir_cdnv}')
+        return eval_outputs
+    
     def _compute_cka(self, model_features, eval_outputs):
         print("--- Starting CKA Computation ---")
 
@@ -252,68 +319,6 @@ class ParallelTrainer:
                 eval_outputs[model_name]['p-value'] = p_value
 
         print("\n--- RSA Computation Complete ---")
-
-    def _run_evaluation(self):
-        eval_outputs = {}
-        model_features = {}
-
-        print(f"\n=== Starting Evaluation ===")
-        for model_name, model_config in self.models_config.items():
-            model_config.model.eval()
-
-            extractor = FeatureExtractor(model_config.model)
-            features, labels = extractor.extract_features(self.train_loader)
-            model_features[model_name] = features
-
-            eval_outputs[model_name] = self._evaluate_single_model(model_config.model)
-            model_config.model.train()
-
-        if self.perform_rsa and len(self.models_config) >= 2:
-            self._compute_rsa(model_features, eval_outputs)
-
-        if self.perform_cka and len(self.models_config) >= 2:
-            self._compute_cka(model_features, eval_outputs)
-
-        return eval_outputs
-
-    @torch.no_grad
-    def _evaluate_single_model(self, model: torch.nn.Module):
-        """
-        Extracts features and computes all specified metrics for a single model.
-        Return eval_outputs dictionary
-        """
-        # 1. Extract features
-        extractor = FeatureExtractor(model)
-        test_features, test_labels = extractor.extract_features(self.test_loader)
-        # 2. Compute specified metrics
-        eval_outputs = defaultdict()
-        embedding_layer = 0 # 0 for h, 1 for g(h)
-        if self.perform_nccc:
-            evaluator = NCCCEvaluator(device=device)
-            centers, selected_classes = evaluator.compute_class_centers(
-                test_features[embedding_layer], test_labels,
-                n_shot=100,
-                repeat=1,
-                selected_classes=None
-            )
-
-            nccc_accs = evaluator.evaluate(
-                test_features[embedding_layer], test_labels, centers, selected_classes
-            )
-            eval_outputs['NCCC'] = nccc_accs[0]
-            print(f"Evaluation accuracies: {nccc_accs}")
-        if self.perform_cdnv:
-            evaluator = GeometricEvaluator(self.settings.num_output_classes)
-            cdnv = evaluator.compute_cdnv(test_features[embedding_layer], test_labels)
-            dir_cdnv = evaluator.compute_directional_cdnv(test_features[embedding_layer], test_labels)
-            eval_outputs['CDNV'] = cdnv
-            eval_outputs['d-CDNV'] = dir_cdnv
-            print(f'CDNV: {cdnv}, Dir-CDNV: {dir_cdnv}')
-        # if self.perform_rsa:
-        #     pass # TODO
-        # if self.perform_cka:
-        #     pass # TODO
-        return eval_outputs
     
     def log_metrics(self, eval_outputs, cur_epoch):
         # Define metrics once
@@ -324,7 +329,6 @@ class ParallelTrainer:
             for model_name in self.models_config.keys():
                 for metric in ["loss", "nccc", "cdnv", "d_cdnv", "rsa", "cka"]:
                     wandb.define_metric(f"{model_name}_{metric}", step_metric="epoch")
-            
             self.wandb_defined = True
 
         # Collect all logs
@@ -466,6 +470,7 @@ if __name__ == "__main__":
             effective_lr=effective_lr,
             total_epochs=epochs,
             gpu_id=int(os.environ.get('LOCAL_RANK')),
+            num_output_classes=num_output_classes,
             # SimCLR specific parameters
             dataset=dataset_name,
             width_multiplier=width_multiplier,
