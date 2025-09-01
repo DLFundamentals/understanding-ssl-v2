@@ -52,8 +52,8 @@ from collections import namedtuple, defaultdict
 from typing import Literal
 
 # # set seed
-# torch.manual_seed(123)
-# torch.cuda.manual_seed(123)
+torch.manual_seed(123)
+torch.cuda.manual_seed(123)
 torch.backends.cudnn.benchmark = True
 
 # initialize distributed training
@@ -85,16 +85,14 @@ class ParallelTrainer:
         torch.manual_seed(123)
         torch.cuda.manual_seed(123)
 
-        self.gpu_id = int(os.environ["LOCAL_RANK"])
+        self.gpu_id = 0 # int(os.environ.get('LOCAL_RANK')) --- IGNORE ---
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.save_every = save_every
         self.log_every = log_every
         self.epochs_run = 0
-        self.snapshot_dir = snapshot_dir
-        
+        self.snapshot_dir = snapshot_dir 
         self.models_config = models_config
-
         self.track_performance = kwargs.get("track_performance", False)
         self.settings = kwargs.get("settings", None)
         self.perform_cdnv = kwargs.get("perform_cdnv", False)
@@ -131,19 +129,6 @@ class ParallelTrainer:
         snapshot = torch.load(snapshot_path, map_location=loc)
         self.optimizer.load_state_dict(snapshot["OPTIMIZER"])
         self.scheduler.load_state_dict(snapshot["SCHEDULER"])
-    
-    def save_snapshot(self, epoch: int) -> None:
-        snapshot = {
-            "MODEL_STATE": self.model.module.state_dict(),
-            "EPOCHS_RUN": epoch,
-            "OPTIMIZER": self.optimizer.state_dict(),
-            "SCHEDULER": self.scheduler.state_dict()
-        }
-        model_snapshot_dir = f'{self.snapshot_dir}/{self.name}'
-        os.makedirs(model_snapshot_dir, exist_ok=True)
-        snapshot_path = os.path.join(model_snapshot_dir, f"snapshot_{epoch}.pth")
-        torch.save(snapshot, snapshot_path)
-        print(f"Saved {self.name} model to {snapshot_path} at epoch {epoch}")
 
     def _run_epoch(self, epoch: int) -> dict:
         print(f"[GPU {self.gpu_id}] Training epoch {epoch}...")
@@ -411,11 +396,7 @@ if __name__ == "__main__":
                         device=device,
                         num_output_classes=num_output_classes)
 
-    # initialize distributed training
-    ddp_setup()
-    print(f"Local rank: {os.environ.get('LOCAL_RANK')}, World size: {os.environ.get('WORLD_SIZE')}")
-
-    if dist.get_rank() == 0 and track_performance:
+    if track_performance:
         wandb.init(
             project = "understanding_ssl_v2",
             config = {
@@ -434,7 +415,6 @@ if __name__ == "__main__":
         )
     
     # load dataset
-    world_size = int(os.environ.get('WORLD_SIZE'))
     print(f"Dataset: {dataset_name}")
     _, train_loader, _, test_loader, _, _ = get_dataset(dataset_name=dataset_name, 
                                     dataset_path=dataset_path,
@@ -469,7 +449,7 @@ if __name__ == "__main__":
             device=device,
             effective_lr=effective_lr,
             total_epochs=epochs,
-            gpu_id=int(os.environ.get('LOCAL_RANK')),
+            gpu_id=0, #int(os.environ.get('LOCAL_RANK')),
             num_output_classes=num_output_classes,
             # SimCLR specific parameters
             dataset=dataset_name,
@@ -504,4 +484,3 @@ if __name__ == "__main__":
         raise NotImplementedError(f"{method_type} not implemented")
     # breakpoint()
     trainer.train(epochs)
-    dist.destroy_process_group()

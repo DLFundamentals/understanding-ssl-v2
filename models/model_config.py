@@ -16,37 +16,35 @@ class ModelConfig:
     
     def train_step(self, batch, gpu_id):
         self.optimizer.zero_grad()
-        # get the inputs
         view1, view2, labels = batch
-        # skip the batch with only 1 image
         if view1.size(0) < 2:
             return 0
         view1, view2 = view1.to(gpu_id), view2.to(gpu_id)
         labels = labels.to(gpu_id)
-        
+
         torch.autograd.set_detect_anomaly(True)
         with autocast(device_type='cuda'):
             if self.name == 'ce':
-                logits1 = self.model.module(view1, mode='train')
-                logits2 = self.model.module(view2, mode='train')
+                logits1 = self.model(view1, mode='train')
+                logits2 = self.model(view2, mode='train')
                 loss = self.criterion(logits1, logits2, labels)
             else:
-                view1_features, view1_proj = self.model.module(view1)
-                view2_features, view2_proj = self.model.module(view2)
+                view1_features, view1_proj = self.model(view1)
+                view2_features, view2_proj = self.model(view2)
                 loss = self.criterion(view1_proj, view2_proj, labels)
-        
+
         self.scaler.scale(loss).backward()
         self.scaler.unscale_(self.optimizer)
         clip_grad_norm_(self.model.parameters(), max_norm=1.0)
         self.scaler.step(self.optimizer)
         self.scaler.update()
         torch.cuda.synchronize()
-        
+
         return loss.item()
 
     def save_snapshot(self, epoch: int, snapshot_dir: str) -> None:
         snapshot = {
-            "MODEL_STATE": self.model.module.state_dict(),
+            "MODEL_STATE": self.model.state_dict(),
             "EPOCHS_RUN": epoch,
             "OPTIMIZER": self.optimizer.state_dict(),
             "SCHEDULER": self.scheduler.state_dict()

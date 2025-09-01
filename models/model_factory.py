@@ -69,8 +69,6 @@ def generate_model_configs(encoder, supervision, temperature, device, effective_
             model.encoder._register_hook()
         
         model = model.to(f'cuda:{gpu_id}')
-        model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model)
-        model = DDP(model, device_ids=[gpu_id], find_unused_parameters=True)
         
         criterion_type = config['criterion_type']
         if criterion_type == 'primary':
