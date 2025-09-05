@@ -19,19 +19,16 @@ class ModelConfig:
         view1, view2, labels = batch
         if view1.size(0) < 2:
             return 0
-        view1, view2 = view1.to(gpu_id), view2.to(gpu_id)
-        labels = labels.to(gpu_id)
+
+        # view1, view2 = view1.to(gpu_id), view2.to(gpu_id)
+        # labels = labels.to(gpu_id)
 
         torch.autograd.set_detect_anomaly(True)
         with autocast(device_type='cuda'):
             if self.name == 'ce':
-                logits1 = self.model(view1, mode='train')
-                logits2 = self.model(view2, mode='train')
-                loss = self.criterion(logits1, logits2, labels)
+                loss = self.model.run_one_batch(batch, self.criterion, mode='train', device=gpu_id)
             else:
-                view1_features, view1_proj = self.model(view1)
-                view2_features, view2_proj = self.model(view2)
-                loss = self.criterion(view1_proj, view2_proj, labels)
+                loss = self.model.run_one_batch(batch, self.criterion, device=gpu_id)
 
         self.scaler.scale(loss).backward()
         self.scaler.unscale_(self.optimizer)
@@ -54,3 +51,4 @@ class ModelConfig:
         snapshot_path = os.path.join(model_snapshot_dir, f"snapshot_{epoch}.pth")
         torch.save(snapshot, snapshot_path)
         print(f"Saved {self.name} model to {snapshot_path} at epoch {epoch}")
+    
