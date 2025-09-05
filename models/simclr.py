@@ -101,7 +101,7 @@ class SimCLRWithClassificationHead(nn.Module):
             # During evaluation, return representations for downstream tasks
             return h, g_h
 
-    def run_one_batch(self, batch, criterion, mode='train', device='cuda'):
+    def run_one_batch(self, batch, criterion, mode='eval', device='cuda'):
         # get the inputs
         view1, view2, labels = batch
         # skip the batch with only 1 image

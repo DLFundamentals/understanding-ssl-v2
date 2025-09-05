@@ -16,19 +16,12 @@ class ModelConfig:
     
     def train_step(self, batch, gpu_id):
         self.optimizer.zero_grad()
-        view1, view2, labels = batch
-        if view1.size(0) < 2:
-            return 0
-
-        # view1, view2 = view1.to(gpu_id), view2.to(gpu_id)
-        # labels = labels.to(gpu_id)
-
-        torch.autograd.set_detect_anomaly(True)
+        
         with autocast(device_type='cuda'):
             if self.name == 'ce':
-                loss = self.model.run_one_batch(batch, self.criterion, mode='train', device=gpu_id)
+                loss = self.model.module.run_one_batch(batch, self.criterion, mode='train', device=gpu_id)
             else:
-                loss = self.model.run_one_batch(batch, self.criterion, device=gpu_id)
+                loss = self.model.module.run_one_batch(batch, self.criterion, device=gpu_id)
 
         self.scaler.scale(loss).backward()
         self.scaler.unscale_(self.optimizer)

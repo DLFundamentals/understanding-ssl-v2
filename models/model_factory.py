@@ -45,17 +45,17 @@ def generate_model_configs(encoder, supervision, temperature, device, effective_
         **model_kwargs
     )
     
-    # base_simclr_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(base_simclr_model)
+    base_simclr_model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(base_simclr_model)
     model_configs = {}
     
     for model_name, config in MODEL_CONFIGS.items():
         print(f"Setting up {config['description']}")
-        
-        # Create a deep copy of the base architecture for each model
-        model_arch_copy = deepcopy(base_simclr_model)
-
-        if model_name == 'ce':
+                
+        if model_name == 'dcl':
+            model = base_simclr_model
+        elif model_name == 'ce':
             # For CE, wrap the copied architecture in our new supervised model
+            model_arch_copy = deepcopy(base_simclr_model)
             model_arch_copy.encoder.remove_hook()
             model_arch_copy.encoder._register_hook()
             model = SimCLRWithClassificationHead(
@@ -64,11 +64,13 @@ def generate_model_configs(encoder, supervision, temperature, device, effective_
             )
         else:
             # For contrastive methods, use the copied architecture directly
+            model_arch_copy = deepcopy(base_simclr_model) 
             model = model_arch_copy
             model.encoder.remove_hook()
             model.encoder._register_hook()
         
         model = model.to(f'cuda:{gpu_id}')
+        model = DDP(model, device_ids=[gpu_id], find_unused_parameters=True)
         
         criterion_type = config['criterion_type']
         if criterion_type == 'primary':
