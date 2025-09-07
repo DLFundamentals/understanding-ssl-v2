@@ -19,7 +19,7 @@ def get_dataset(
     dataset_path,
     augment_both_views=True,
     batch_size=64,
-    num_workers=8,
+    num_workers=32,
     shuffle=True,
     **kwargs
 ):
@@ -69,7 +69,7 @@ def get_dataset(
 
     # Adjust for DDP
     effective_bs = batch_size // world_size if multi_gpu else batch_size
-    drop_last = multi_gpu  # avoid uneven batches in DDP
+    drop_last = True  # avoid uneven batches in DDP
     shuffle = not multi_gpu  # handled via sampler in DDP
 
     train_loader = _build_dataloader(

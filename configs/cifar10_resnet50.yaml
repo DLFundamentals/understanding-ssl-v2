@@ -15,7 +15,7 @@ training:
   augment_both: True
   save_every: 100
   log_every: 10
-  track_performance: True
+  track_performance: False
   multi_gpu: False
   world_size: 1
 
@@ -46,5 +46,5 @@ linear:
   top_lr: 3e-4
   momentum: 0.9
   weight_decay: 5e-4
-  track_performance: True
+  track_performance: False
   save_every: 10

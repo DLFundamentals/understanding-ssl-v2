@@ -390,13 +390,14 @@ if __name__ == "__main__":
 
     # set device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    ddp_setup()
 
     Settings = namedtuple("Settings", ["batch_size", "device", "num_output_classes"])
     settings = Settings(batch_size=batch_size, 
                         device=device,
                         num_output_classes=num_output_classes)
 
-    if track_performance:
+    if track_performance and dist.is_initialized():
         wandb.init(
             project = "understanding_ssl_v2",
             config = {
@@ -484,3 +485,4 @@ if __name__ == "__main__":
         raise NotImplementedError(f"{method_type} not implemented")
     # breakpoint()
     trainer.train(epochs)
+    cleanup()
