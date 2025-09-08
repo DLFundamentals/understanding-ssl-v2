@@ -34,7 +34,7 @@ class ModelConfig:
 
     def save_snapshot(self, epoch: int, snapshot_dir: str) -> None:
         snapshot = {
-            "MODEL_STATE": self.model.state_dict(),
+            "MODEL_STATE": self.model.module.state_dict(),
             "EPOCHS_RUN": epoch,
             "OPTIMIZER": self.optimizer.state_dict(),
             "SCHEDULER": self.scheduler.state_dict()
