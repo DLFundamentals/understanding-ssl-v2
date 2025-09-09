@@ -26,7 +26,7 @@ def get_transforms(dataset: str = 'imagenet', **kwargs):
     """
     dataset = dataset.lower()
 
-    if 'imagenet' in dataset:
+    if dataset=='full_imagenet' or dataset=='mini_imagenet':
         s = 1.0
         mean = [0.485, 0.456, 0.406]
         std = [0.229, 0.224, 0.225]
@@ -48,7 +48,7 @@ def get_transforms(dataset: str = 'imagenet', **kwargs):
             transforms.Normalize(mean=mean, std=std),
         ])
 
-    elif 'cifar' in dataset or dataset == 'svhn':
+    elif 'cifar' in dataset or dataset == 'svhn' or dataset == 'tiny_imagenet':
         s = 0.5
         mean = [0.4914, 0.4822, 0.4465]
         std = [0.2023, 0.1994, 0.2010]
