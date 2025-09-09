@@ -9,47 +9,28 @@ torchrun --nproc_per_node=#GPUs --standalone <>_train_simclr.py --config config/
 Arguments can be found here:
 https://github.com/pytorch/pytorch/blob/bbe803cb35948df77b46a2d38372910c96693dcd/torch/distributed/run.py#L401
 """
-import torch
-import torch.nn as nn
-import torchvision
-import torchvision.models as models
-from torch.utils.data import DataLoader
-import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
-from torch.nn.utils import clip_grad_norm_
-# from torchlars import LARS
-from torch.amp import autocast
-import wandb
-
-# distributed training
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
-
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import torchvision.models as models
+# from torchlars import LARS
+import wandb
+import yaml, argparse
+from tqdm import tqdm
+from collections import namedtuple, defaultdict
+import torch
+# distributed training
+import torch.distributed as dist
+from torch.utils.data.distributed import DistributedSampler
 # utils
 from data_utils.dataloaders import get_dataset
 from eval_utils.feature_extractor import FeatureExtractor
 from eval_utils.nccc_utils import NCCCEvaluator
 from eval_utils.geometry import GeometricEvaluator
 from eval_utils.similarity_metrics import CenteredKernelAlignment, RepresentationSimilarityAnalysis
-from utils.losses import NTXentLoss, DecoupledNTXentLoss, NegSupConLoss, SupConLoss, HybridSupConLoss
-from utils.optimizer import LARS
-
 # model
-from models.simclr import SimCLR
-from models.model_config import ModelConfig
 from models.model_factory import generate_model_configs
-
-import argparse
-import yaml
-
-from tqdm import tqdm
-from collections import namedtuple, defaultdict
-from typing import Literal
 
 # # set seed
 torch.manual_seed(123)
@@ -58,14 +39,14 @@ torch.backends.cudnn.benchmark = True
 
 # initialize distributed training
 def ddp_setup():
-    local_rank = int(os.environ.get("LOCAL_RANK"))
+    rank = int(os.environ["RANK"])
+    local_rank = int(os.environ["LOCAL_RANK"])
     world_size = int(os.environ.get("WORLD_SIZE"))
     torch.cuda.set_device(local_rank)
     dist.init_process_group(backend="nccl", 
                             world_size=world_size, 
-                            rank=local_rank)
+                            rank=rank)
     
-
 def cleanup():
   dist.destroy_process_group()
 
@@ -204,6 +185,7 @@ class ParallelTrainer:
             model_config.model.eval()
 
             with torch.no_grad():
+                # 1. Forward pass to extract features for all models
                 extractor = FeatureExtractor(model_config.model)
                 features, labels = extractor.extract_features(self.test_loader)
             model_features[model_name] = features
@@ -230,7 +212,7 @@ class ParallelTrainer:
         eval_outputs = defaultdict()
         embedding_layer = 0 # 0 for h, 1 for g(h)
         if self.perform_nccc:
-            evaluator = NCCCEvaluator(device=device)
+            evaluator = NCCCEvaluator(device=self.settings.device)
             centers, selected_classes = evaluator.compute_class_centers(
                 test_features[embedding_layer], test_labels,
                 n_shot=100,
@@ -440,7 +422,7 @@ if __name__ == "__main__":
     
     if method_type == 'simclr':
         # Calculate effective learning rate
-        effective_lr = lr * world_size * (batch_size // 256)
+        effective_lr = lr * world_size * (batch_size / 256)
         
         # Create ALL model configurations
         model_configs = generate_model_configs(

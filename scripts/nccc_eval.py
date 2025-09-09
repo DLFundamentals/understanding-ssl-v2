@@ -117,6 +117,12 @@ if __name__ == '__main__':
     else:
         raise NotImplementedError(f"{method_type} not implemented")
     
+    if args.supervision == 'ce':
+        model = SimCLRWithClassificationHead(
+            simclr_model=model,
+            num_classes=num_output_classes
+        )
+    
     # load model checkpoint
     checkpoints_dir = f'{args.ckpt_path}/{args.supervision}'
     print(f"Loading checkpoints from {checkpoints_dir}")
@@ -126,7 +132,7 @@ if __name__ == '__main__':
     # Output logging
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    log_file = os.path.join(args.output_path, dataset_name + f'_{args.supervision}_nccc.csv')
+    log_file = os.path.join(args.output_path, f'{args.supervision}_nccc.csv')
     log_columns = ['Epoch', 'NCCC Train', 'NCCC Test']
     if not os.path.exists(log_file):
         df = pd.DataFrame(columns=log_columns)

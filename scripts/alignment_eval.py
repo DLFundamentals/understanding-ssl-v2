@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import utility functions and models.
 from data_utils.dataloaders import get_dataset
 from eval_utils.feature_extractor import FeatureExtractor
-from eval_utils.similarity_metrics import RepresentationSimilarityAnalysis, CenteredKernelAlignment
+from eval_utils.similarity_metrics import compute_cka, compute_rsa
 from models.simclr import SimCLR, SimCLRWithClassificationHead
 
 def set_seed(seed=42):
@@ -43,6 +43,19 @@ def freeze_model(model):
         param.requires_grad = False
     return model
 
+def initialize_logging(output_path, mode='train'):
+    log_columns = ['Epoch', 'NSCL_RSA', 'SCL_RSA', 'NSCL_CKA', 'SCL_CKA', 'CE_RSA', 'CE_CKA']
+    if not os.path.exists(output_path):
+        os.makedirs(output_path)
+    log_file = os.path.join(output_path, f'{mode}_alignment.csv')
+    if not os.path.exists(log_file):
+        df = pd.DataFrame(columns=log_columns)
+        df.to_csv(log_file, index=False)
+    else:
+        print(f"Log file {log_file} exists. Resuming logging.")
+        df = pd.read_csv(log_file)
+    return log_file, df
+
 RSA=True
 CKA=True
 
@@ -50,9 +63,9 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="General Evluation Script")
     parser.add_argument('--config', '-c', required=True, help='path to yaml config file')
-    parser.add_argument('--ckpt_path', '-ckpt', required=True, default=None,
+    parser.add_argument('--ckpt_path', '-ckpt', required=True,
                         help='path to model checkpoints')
-    parser.add_argument('--output_path', '-out', required=True, default=None,
+    parser.add_argument('--output_path', '-out', required=True,
                         help='path to save logs')
     args = parser.parse_args()
 
@@ -143,11 +156,11 @@ if __name__ == '__main__':
     nscl_model = deepcopy(ssl_model)
     nscl_model.encoder.remove_hook()
     nscl_model.encoder._register_hook()
-
+    # deepcopy SCL model
     scl_model = deepcopy(ssl_model)
     scl_model.encoder.remove_hook()
     scl_model.encoder._register_hook()
-
+    # deepcopy CE model
     ce_model_arch = deepcopy(ssl_model)
     ce_model_arch.encoder.remove_hook()
     ce_model_arch.encoder._register_hook()
@@ -164,112 +177,114 @@ if __name__ == '__main__':
     sorted_checkpoints = sorted(checkpoint_files, key=lambda x: int(x.split('_')[-1].split('.')[0]))
 
     # Output logging
-    if not os.path.exists(args.output_path):
-        os.makedirs(args.output_path)
-    log_file = os.path.join(args.output_path, dataset_name + '_train_alignment.csv')
-    # log_file = os.path.join(args.output_path, dataset_name + '_test_alignment.csv')
-    log_columns = ['Epoch', 'NSCL_RSA', 'SCL_RSA', 'NSCL_CKA', 'SCL_CKA', 'CE_RSA', 'CE_CKA']
-    if not os.path.exists(log_file):
-        df = pd.DataFrame(columns=log_columns)
-        df.to_csv(log_file, index=False)
-    else:
-        df = pd.read_csv(log_file)
+    train_log_file, train_df = initialize_logging(args.output_path, mode='train')
+    test_log_file, test_df = initialize_logging(args.output_path, mode='test')
+
+    def process_model(model_name, ssl_model, device, ckpt_path, epoch):
+        """
+        Loads, freezes, and extracts features for a given model.
+        """
+        model_path = f'{ckpt_path}/{model_name}/snapshot_{epoch}.pth'
+        if not os.path.exists(model_path):
+            print(f"Warning: Checkpoint not found for {model_name} at epoch {epoch}. Skipping.")
+            return None, None
+
+        model = load_snapshot(model_path, ssl_model, device)
+        model = freeze_model(model)
+        print(f"Model {model_name} frozen for feature extraction.")
+
+        extractor = FeatureExtractor(model)
+        train_features, _ = extractor.extract_features(train_loader)
+        test_features, _ = extractor.extract_features(test_loader)
+        return train_features, test_features
+    
+    models_to_evaluate = {
+        'dcl': ssl_model,
+        'nscl': nscl_model,
+        'scl': scl_model,
+        'ce': ce_model
+    }
 
     for ssl_ckpt in sorted_checkpoints:
         epoch = int(ssl_ckpt.split('_')[-1].split('.')[0])
-        if epoch in df['Epoch'].values:
+        if epoch in train_df['Epoch'].values:
             print(f"Epoch {epoch} already evaluated. Skipping.")
             continue
         print(f'\nEvaluating Epoch {epoch}')
-        ssl_snapshot_path = f'{args.ckpt_path}/dcl/snapshot_{epoch}.pth'
-        ssl_model = load_snapshot(ssl_snapshot_path, ssl_model, device)
-        ssl_model.eval()
-        nscl_snapshot_path = f'{args.ckpt_path}/nscl/snapshot_{epoch}.pth'
-        nscl_model = load_snapshot(nscl_snapshot_path, nscl_model, device)
-        nscl_model.eval()
-        scl_snapshot_path = f'{args.ckpt_path}/scl/snapshot_{epoch}.pth'
-        scl_model = load_snapshot(scl_snapshot_path, scl_model, device)
-        scl_model.eval()
-        ce_snapshot_path = f'{args.ckpt_path}/ce/snapshot_{epoch}.pth'
-        ce_model = load_snapshot(ce_snapshot_path, ce_model, device)
-        ce_model.eval()
-        # freeze models
-        ssl_model = freeze_model(ssl_model)
-        nscl_model = freeze_model(nscl_model)
-        scl_model = freeze_model(scl_model)
-        ce_model = freeze_model(ce_model)
-        print("Models frozen for feature extraction")
-        # --- Feature Extraction ---
-        emb_layer = 0 # 0 for h and 1 for g(h)
-        dcl_extractor = FeatureExtractor(ssl_model)
-        dcl_train_features, _ = dcl_extractor.extract_features(train_loader)
-
-        nscl_extractor = FeatureExtractor(nscl_model)
-        nscl_train_features, _ = nscl_extractor.extract_features(train_loader)
-
-        scl_extractor = FeatureExtractor(scl_model)
-        scl_train_features, _ = scl_extractor.extract_features(train_loader)
-
-        ce_extractor = FeatureExtractor(ce_model)
-        ce_train_features, _ = ce_extractor.extract_features(train_loader)
-
-        if RSA:
-            rsa_eval = RepresentationSimilarityAnalysis(metric='cosine')
-            # 1. Compute RDMs for both feature sets
-            dcl_rdm = rsa_eval.compute_rdm(dcl_train_features[emb_layer])
-            nscl_rdm = rsa_eval.compute_rdm(nscl_train_features[emb_layer])
-            scl_rdm = rsa_eval.compute_rdm(scl_train_features[emb_layer])
-            ce_rdm = rsa_eval.compute_rdm(ce_train_features[emb_layer])
-
-            # 2. Compute RSA score (correlation between RDMs)
-            nscl_rsa_score, p_value = rsa_eval.compute_rsa(dcl_rdm, nscl_rdm, correlation_type='pearson')
-            print(f"\nRSA (Pearson) Correlation between DCL and NSCL features: {nscl_rsa_score:.4f} with p-value: {p_value:.4e}")
-            scl_rsa_score, p_value = rsa_eval.compute_rsa(dcl_rdm, scl_rdm, correlation_type='pearson')
-            print(f"RSA (Pearson) Correlation between DCL and SCL features: {scl_rsa_score:.4f} with p-value: {p_value:.4e}")
-            ce_rsa_score, p_value = rsa_eval.compute_rsa(dcl_rdm, ce_rdm, correlation_type='pearson')
-            print(f"RSA (Pearson) Correlation between DCL and CE features: {ce_rsa_score:.4f} with p-value: {p_value:.4e}")
-
-            print("\n--- RSA Computation Complete ---")
+        features = {}
+        for name, model_arch in models_to_evaluate.items():
+            train_feats, test_feats = process_model(name, model_arch, device, args.ckpt_path, epoch)
+            if train_feats is not None:
+                features[name] = {'train': train_feats, 'test': test_feats}
         
+        emb_layer = 0 # 0 for h and 1 for g(h)
+        if RSA:
+            print("--- Starting RSA Computation ---")
+            nscl_train_rsa_score = compute_rsa(features['dcl']['train'], features['nscl']['train'],
+                                        model_name1='dcl', model_name2='nscl',
+                                        embed_layer=emb_layer, device=device)
+            nscl_test_rsa_score = compute_rsa(features['dcl']['test'], features['nscl']['test'],
+                                        model_name1='dcl', model_name2='nscl',
+                                        embed_layer=emb_layer, device=device)
+            scl_train_rsa_score = compute_rsa(features['dcl']['train'], features['scl']['train'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            scl_test_rsa_score = compute_rsa(features['dcl']['test'], features['scl']['test'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            ce_train_rsa_score = compute_rsa(features['dcl']['train'], features['ce']['train'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
+            ce_test_rsa_score = compute_rsa(features['dcl']['test'], features['ce']['test'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
+            print("\n--- RSA Computation Complete ---")
         if CKA:
             # --- CKA Execution ---
             print("--- Starting CKA Computation ---")
-
-            cka_sample_size = 10000
-
-            print(f"Subsampling {cka_sample_size} images for CKA calculation due to memory constraints.")
-            # Ensure consistent subsampling for both feature sets
-            indices = torch.randperm(num_train_images)[:cka_sample_size]
-            sub_dcl_features = dcl_train_features[emb_layer][indices]
-            sub_nscl_features = nscl_train_features[emb_layer][indices]
-            sub_scl_features = scl_train_features[emb_layer][indices]
-            sub_ce_features = ce_train_features[emb_layer][indices]
-
-            # Perform CKA calculation
-            cka_eval = CenteredKernelAlignment(kernel='linear')
-            try:
-                nscl_cka_score = cka_eval.cka_linear_kernel(sub_dcl_features, sub_nscl_features, device=device)
-                print(f"\nCKA (Linear Kernel) between DCL and NSCL features: {nscl_cka_score:.4f}")
-                scl_cka_score = cka_eval.cka_linear_kernel(sub_dcl_features, sub_scl_features, device=device)
-                print(f"CKA (Linear Kernel) between DCL and SCL features: {scl_cka_score:.4f}")
-                ce_cka_score = cka_eval.cka_linear_kernel(sub_dcl_features, sub_ce_features, device=device)
-                print(f"CKA (Linear Kernel) between DCL and CE features: {ce_cka_score:.4f}")
-            except Exception as e:
-                print(f"An error occurred during CKA calculation: {e}")
-                print("This is likely due to memory limitations. Try reducing 'cka_sample_size' further.")
+            nscl_train_cka_score = compute_cka(features['dcl']['train'], features['nscl']['train'],
+                                        model_name1='dcl', model_name2='nscl',
+                                        embed_layer=emb_layer, device=device)
+            nscl_test_cka_score = compute_cka(features['dcl']['test'], features['nscl']['test'],
+                                        model_name1='dcl', model_name2='nscl',
+                                        embed_layer=emb_layer, device=device)
+            scl_train_cka_score = compute_cka(features['dcl']['train'], features['scl']['train'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            scl_test_cka_score = compute_cka(features['dcl']['test'], features['scl']['test'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            ce_train_cka_score = compute_cka(features['dcl']['train'], features['ce']['train'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
+            ce_test_cka_score = compute_cka(features['dcl']['test'], features['ce']['test'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
 
             print("\n--- CKA Computation Complete ---")
         
         # log results
-        new_entry = {
+        train_new_entry = {
             'Epoch': epoch,
-            'NSCL_RSA': nscl_rsa_score if RSA else None,
-            'NSCL_CKA': nscl_cka_score if CKA else None,
-            'SCL_RSA': scl_rsa_score if RSA else None,
-            'SCL_CKA': scl_cka_score if CKA else None,
-            'CE_RSA': ce_rsa_score if RSA else None,
-            'CE_CKA': ce_cka_score if CKA else None,
+            'NSCL_RSA': nscl_train_rsa_score if RSA else None,
+            'NSCL_CKA': nscl_train_cka_score if CKA else None,
+            'SCL_RSA': scl_train_rsa_score if RSA else None,
+            'SCL_CKA': scl_train_cka_score if CKA else None,
+            'CE_RSA': ce_train_rsa_score if RSA else None,
+            'CE_CKA': ce_train_cka_score if CKA else None,
         }
-        df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
-    df = df.sort_values(by='Epoch')
-    df.to_csv(log_file, index=False)
+        train_df = pd.concat([train_df, pd.DataFrame([train_new_entry])], ignore_index=True)
+        test_new_entry = {
+            'Epoch': epoch,
+            'NSCL_RSA': nscl_test_rsa_score if RSA else None,
+            'NSCL_CKA': nscl_test_cka_score if CKA else None,
+            'SCL_RSA': scl_test_rsa_score if RSA else None,
+            'SCL_CKA': scl_test_cka_score if CKA else None,
+            'CE_RSA': ce_test_rsa_score if RSA else None,
+            'CE_CKA': ce_test_cka_score if CKA else None,
+        }
+        test_df = pd.concat([test_df, pd.DataFrame([test_new_entry])], ignore_index=True)
+    train_df = train_df.sort_values(by='Epoch')
+    train_df.to_csv(train_log_file, index=False)
+    test_df = test_df.sort_values(by='Epoch')
+    test_df.to_csv(test_log_file, index=False)
