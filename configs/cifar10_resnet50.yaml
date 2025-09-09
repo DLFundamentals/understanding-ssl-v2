@@ -14,8 +14,8 @@ training:
   augmentations_type: "cifar"
   augment_both: True
   save_every: 100
-  log_every: 10
-  track_performance: False
+  log_every: 200
+  track_performance: True
   multi_gpu: False
   world_size: 1
 

@@ -13,8 +13,8 @@ training:
   lr: 0.3
   augmentations_type: "cifar"
   augment_both: True
-  save_every: 100
-  log_every: 200
+  save_every: 200
+  log_every: 50
   track_performance: True
   multi_gpu: False
   world_size: 1
@@ -27,7 +27,7 @@ model:
   projection_dim: 128
 
 loss:
-  temperature: 1.0
+  temperature: 0.1
 
 evaluation:
   checkpoints_dir: "checkpoints/cifar100_parallel/"
