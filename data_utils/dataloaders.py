@@ -105,8 +105,6 @@ def filter_class_indices(dataset, classes, labels):
         Subset: Filtered dataset
         np.ndarray: Filtered labels
     """
-    if labels is None:
-        labels = np.array(dataset.targets)
     class_indices = np.where(np.isin(labels, classes))[0]
     return Subset(dataset, class_indices.tolist()), labels[class_indices]
 

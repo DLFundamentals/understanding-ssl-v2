@@ -186,3 +186,46 @@ class CenteredKernelAlignment:
         cka_score = numerator / torch.sqrt(denom_K * denom_L)
 
         return cka_score.item()
+    
+def compute_cka(features1, features2,
+                model_name1: str, model_name2: str,
+                embed_layer: int = 0, # 0 for h, 1 for g(h)
+                device='cuda'):
+    cka_sample_size = 10000
+    cka = CenteredKernelAlignment()
+    print(f"Subsampling {cka_sample_size} images for CKA calculation due to memory constraints.")
+
+    features1 = features1[embed_layer]
+    num_samples = features1.shape[0]
+
+    indices = torch.randperm(num_samples)[:cka_sample_size]
+    sub_features1 = features1[indices]
+
+    features2 = features2[embed_layer]
+    sub_features2 = features2[indices]
+            
+    try:
+        cka_score = cka.cka_linear_kernel(sub_features1, sub_features2, device=device)
+        print(f"\nCKA (Linear Kernel) between {model_name1} AND {model_name2} features: {cka_score:.4f}")
+    except Exception as e:
+        print(f"Error computing CKA: {e}")
+    
+    return cka_score
+
+def compute_rsa(features1, features2,
+                model_name1: str, model_name2: str,
+                embed_layer: int = 0, # 0 for h, 1 for g(h)
+                device='cuda'):
+    rsa = RepresentationSimilarityAnalysis("cosine")
+
+    features1 = features1[embed_layer]
+    features2 = features2[embed_layer]
+
+    features1_rdm = rsa.compute_rdm(features1, chunk_size=1024)
+    features2_rdm = rsa.compute_rdm(features2, chunk_size=1024)
+
+    # Compute the RSA between the two RDMs
+    rsa_pearson_score, p_value = rsa.compute_rsa(features1_rdm, features2_rdm, correlation_type='pearson')
+    print(f"\nRSA (Pearson) Correlation between {model_name1} and {model_name2} features: {rsa_pearson_score:.4f} with p-value: {p_value:.4e}")
+
+    return rsa_pearson_score

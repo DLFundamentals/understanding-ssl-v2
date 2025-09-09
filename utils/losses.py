@@ -60,7 +60,7 @@ class NTXentLoss(nn.Module):
     
 class DecoupledNTXentLoss(nn.Module):
     """
-    Implementation of the NT-Xent loss function used in SimCLR
+    Implementation of DCL
     """
     def __init__(self, temperature=0.5, device="cuda"):
         super().__init__()
@@ -112,6 +112,9 @@ class DecoupledNTXentLoss(nn.Module):
         # Concatenate positive and negative samples for logits
         logits = torch.cat((positive_samples, negative_samples), dim=1)  # N x (N-1)
 
+        # numerical stability
+        logits = logits - torch.max(logits, dim=1, keepdim=True)[0]
+
         # Calculate the loss using cross-entropy
         loss = self.criterion(logits, labels)
         loss /= N  # Normalize by batch size
@@ -132,21 +135,9 @@ class NegSupConLoss(nn.Module):
 
     def mask_correlated_samples(self, batch_size, labels):
         N = 2 * batch_size
-
         labels = labels.contiguous().view(-1, 1)
-
-        # create a mask where negative pairs from the same class are masked
+        # create a mask where negative pairs from the same class are masked 1s
         mask = torch.ne(labels, labels.T).to(self.device)
-
-        # mask the diagonal (self-similarity)
-        mask = mask.fill_diagonal_(0) # redundant step after torch.ne
-
-        # mask the positive pairs
-        # this is also redundant
-        for i in range(batch_size):
-            mask[i, batch_size + i] = 0
-            mask[batch_size + i, i] = 0
-
         return mask
 
     def forward(self, z_i, z_j, labels):
@@ -176,38 +167,16 @@ class NegSupConLoss(nn.Module):
         positive_samples = torch.cat((sim_i_j, sim_j_i), dim=0).reshape(N, 1)
 
         # Extract negative samples
-        negative_samples_list = [sim[i, self.mask[i]] for i in range(N)]
-
-        # Find max negatives any sample has
-        max_negatives = max(len(neg) for neg in negative_samples_list)
-
-        # find min negatives and check if it is greater than 0
-        min_negatives = min(len(neg) for neg in negative_samples_list)
-        if min_negatives == 0:
-            print("Negative samples are empty")
-            print("Negative samples:", negative_samples_list)
-            # stop training
-            raise ValueError("Negative samples are empty")
-
-        # Pad negatives to ensure equal shape
-        negative_samples_padded = torch.stack([
-            F.pad(neg, (0, max_negatives - len(neg)), value=-float("inf")) for neg in negative_samples_list
-        ])
+        negative_samples = sim.masked_fill(~self.mask, float("-inf"))
 
         # Labels for cross-entropy loss (all zeros for correct classification)
         labels_hack = torch.zeros(N).to(positive_samples.device).long()
 
         # Concatenate positive and negative samples for logits
-        logits = torch.cat((positive_samples, negative_samples_padded), dim=1)  # N x (N-1)
+        logits = torch.cat((positive_samples, negative_samples), dim=1)  # N x (N-1)
 
-        # check for NaN values before calculating loss
-        if torch.isnan(logits).any():
-            print("NaN values detected in logits")
-            print("NaN values in positive samples:", torch.isnan(positive_samples).any())
-            print("NaN values in negative samples:", torch.isnan(negative_samples_padded).any())
-
-            # stop training
-            raise ValueError("NaN values detected in logits")
+        # numerical stability
+        logits = logits - torch.max(logits, dim=1, keepdim=True)[0]
 
         # Calculate the loss using cross-entropy
         loss = self.criterion(logits, labels_hack)
