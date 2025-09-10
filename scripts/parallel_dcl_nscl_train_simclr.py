@@ -81,7 +81,6 @@ class ParallelTrainer:
         self.perform_rsa = kwargs.get("perform_rsa", False)
         self.perform_cka = kwargs.get("perform_cka", False) 
         self.wandb_defined = False
-    
     def _load_snapshot(self, snapshot_dir: str) -> None:
         loc = f"cuda:{self.gpu_id}"
         # load the latest snapshot
@@ -145,9 +144,10 @@ class ParallelTrainer:
     def train(self, max_epochs: int) -> None:
         # Initialize loss tracking
         losses_per_epoch = {name: 8.0 for name in self.models_config.keys()} # dummy loss value
-        # # Set all models to training mode
+        # # Set all models to training mode and load snapshots if available
         for model_config in self.models_config.values():
             model_config.model.train()
+            self.epochs_run = model_config.load_snapshot(self.snapshot_dir, device)
         for epoch in range(self.epochs_run, max_epochs):
             # On GPU 0 do extra logging, snapshot saving, and evaluation
             if self.gpu_id == 0:
@@ -445,6 +445,7 @@ if __name__ == "__main__":
             stride=16 if 'imagenet' in dataset_name else 2,
             token_hidden_dim=768 if 'imagenet' in dataset_name else 384,
             mlp_dim=3072 if 'imagenet' in dataset_name else 1536,
+            checkpoints_dir=checkpoints_dir,
         )
         
         # Create trainer with the model configurations

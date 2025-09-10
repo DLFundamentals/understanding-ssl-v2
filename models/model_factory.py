@@ -68,7 +68,7 @@ def generate_model_configs(encoder, supervision, temperature, device, effective_
             model = model_arch_copy
             model.encoder.remove_hook()
             model.encoder._register_hook()
-        
+                   
         model = model.to(f'cuda:{gpu_id}')
         model = DDP(model, device_ids=[gpu_id], find_unused_parameters=True)
         

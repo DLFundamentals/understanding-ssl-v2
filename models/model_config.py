@@ -44,4 +44,24 @@ class ModelConfig:
         snapshot_path = os.path.join(model_snapshot_dir, f"snapshot_{epoch}.pth")
         torch.save(snapshot, snapshot_path)
         print(f"Saved {self.name} model to {snapshot_path} at epoch {epoch}")
+
+    def load_snapshot(self, snapshot_dir: str, device: torch.device) -> int:
+        if not os.path.exists(os.path.join(snapshot_dir, self.name)):
+            os.makedirs(os.path.join(snapshot_dir, self.name))
+            print(f"No snapshots found for {self.name} in {snapshot_dir}")
+            return 0
+        all_snapshots = os.listdir(os.path.join(snapshot_dir, self.name))
+        if len(all_snapshots) == 0:
+            print(f"No snapshots found for {self.name} in {snapshot_dir}")
+            return 0
+        sorted_snapshots = sorted(all_snapshots, key=lambda x: int(x.split('_')[1].split('.')[0]))
+        latest_snapshot = sorted_snapshots[-1]
+        snapshot_path = os.path.join(snapshot_dir, self.name, latest_snapshot)
+        snapshot = torch.load(snapshot_path, map_location=device)
+        self.model.module.load_state_dict(snapshot['MODEL_STATE'])
+        self.optimizer.load_state_dict(snapshot['OPTIMIZER'])
+        self.scheduler.load_state_dict(snapshot['SCHEDULER'])
+        epochs_trained = snapshot['EPOCHS_RUN']
+        print(f"Loaded {self.name} model from epoch {epochs_trained}")
+        return epochs_trained
     
