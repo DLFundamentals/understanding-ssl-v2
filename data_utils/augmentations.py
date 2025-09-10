@@ -47,8 +47,26 @@ def get_transforms(dataset: str = 'imagenet', **kwargs):
             RepeatChannelsIfNeeded(),
             transforms.Normalize(mean=mean, std=std),
         ])
-
-    elif 'cifar' in dataset or dataset == 'svhn' or dataset == 'tiny_imagenet':
+    elif dataset == 'tiny_imagenet':
+        s = 0.5
+        mean = [0.485, 0.456, 0.406]
+        std = [0.229, 0.224, 0.225]
+        color_jitter = transforms.ColorJitter(0.8 * s, 0.8 * s, 0.8 * s, 0.2 * s)
+        
+        train_transform = transforms.Compose([
+            transforms.RandomResizedCrop(64),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomApply([color_jitter], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std),
+        ])
+        basic_transform = transforms.Compose([
+            transforms.Resize(64),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=mean, std=std),
+        ])
+    elif 'cifar' in dataset or dataset == 'svhn':
         s = 0.5
         mean = [0.4914, 0.4822, 0.4465]
         std = [0.2023, 0.1994, 0.2010]
