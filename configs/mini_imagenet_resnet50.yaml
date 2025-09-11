@@ -8,7 +8,7 @@ dataset:
   num_output_classes: 100
 
 training:
-  batch_size: 1024
+  batch_size: 896
   num_epochs: 2501
   lr: 0.3
   augmentations_type: "imagenet"
@@ -30,7 +30,7 @@ loss:
   temperature: 0.1
 
 evaluation:
-  checkpoints_dir: "checkpoints/tiny_imagenet_parallel/"
+  checkpoints_dir: "checkpoints/mini_imagenet_parallel/"
   perform_rsa: True
   perform_cka: True
   perform_cdnv: True
