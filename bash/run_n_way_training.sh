@@ -26,6 +26,7 @@ for n_way in "${N_WAYS[@]}"; do
     echo "N-WAY set to: ${n_way}"
 
     torchrun --nproc_per_node=1 --standalone \
+    scripts/parallel_n_way_train.py \
     --config $CONFIG_PATH \
     --n_way $n_way
 done

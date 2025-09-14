@@ -9,11 +9,11 @@ dataset:
 
 training:
   batch_size: 1024
-  num_epochs: 2501
+  num_epochs: 1001
   lr: 0.3
   augmentations_type: "cifar"
   augment_both: True
-  save_every: 100
+  save_every: 200
   log_every: 200
   track_performance: True
   multi_gpu: False

@@ -331,7 +331,7 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(description='SimCLR Training')
     parser.add_argument('--config', '-c', required=True, help='path to yaml config file')
-    parser.add_argument('-n_way', type=int, required=True, help='number of classes used for training')
+    parser.add_argument('--n_way', type=int, required=True, help='number of classes used for training')
     args = parser.parse_args()
 
     # load config file
@@ -402,11 +402,14 @@ if __name__ == "__main__":
     # load dataset
     print(f"Dataset: {dataset_name}, N-way: {args.n_way}")
     selected_classes = np.random.choice(num_output_classes, size=args.n_way, replace=False)
+    class_info_file = f'./results/{dataset_name}/class_info.txt'
+    with open(class_info_file, 'a') as f:
+        f.write(f'N = {args.n_way}; Classes = {selected_classes}')
     _, train_loader, _, test_loader, _, _ = get_dataset(dataset_name=dataset_name, 
                                     dataset_path=dataset_path,
                                     augment_both_views=augment_both,
                                     batch_size=batch_size, multi_gpu=multi_gpu,
-                                    world_size=world_size, supervision='SCL', # sample with NSCL strategies
+                                    world_size=world_size, supervision=supervision, # sample with NSCL strategies
                                     test=True,
                                     classes=selected_classes)
     # define model

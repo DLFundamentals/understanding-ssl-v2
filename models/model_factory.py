@@ -18,14 +18,14 @@ MODEL_CONFIGS = {
         'criterion_type': 'neg_sup_con',
         'description': 'Negatives-only Supervised Contrastive Learning'
     },
-    'scl': {
-        'criterion_type': 'sup_con',
-        'description': 'Supervised Contrastive Learning'
-    },
-    'ce': {
-        'criterion_type': 'cross_entropy',
-        'description': 'Cross Entropy Learning'
-    }
+    # 'scl': {
+    #     'criterion_type': 'sup_con',
+    #     'description': 'Supervised Contrastive Learning'
+    # },
+    # 'ce': {
+    #     'criterion_type': 'cross_entropy',
+    #     'description': 'Cross Entropy Learning'
+    # }
 }
 
 CRITERION_MAPPING = {
