@@ -56,6 +56,23 @@ def initialize_logging(output_path, mode='train'):
         df = pd.read_csv(log_file)
     return log_file, df
 
+def get_classes(data, n_value):
+    """
+    Finds the line for a specific N and extracts its classes into a list.
+    """
+    search_str = f'N = {n_value};'
+
+    # Loop through each line in the data
+    for line in data:
+        if line.startswith(search_str):
+            classes_part = line.split('Classes = ')[1]
+            numbers_str = classes_part.strip('[]')
+            if not numbers_str:
+                return []
+            return [int(num) for num in numbers_str.split()]
+    # If the loop finishes without finding the N value, return None
+    return None
+
 RSA=True
 CKA=True
 
@@ -67,6 +84,10 @@ if __name__ == '__main__':
                         help='path to model checkpoints')
     parser.add_argument('--output_path', '-out', required=True,
                         help='path to save logs')
+    parser.add_argument('--classes_path', '-cls', type=str, default=None,
+                        help='txt file storing selected classes to subsample dataset')
+    parser.add_argument('--n_way', type=int, required=True, 
+                        help='number of classes used for training') 
     args = parser.parse_args()
 
     # load config file
@@ -96,10 +117,17 @@ if __name__ == '__main__':
 
     # get dataset
     augment_both = False # override for evaluation
+    classes_file = args.classes_path
+    if classes_file:
+        with open(classes_file, 'r') as f:
+            content = f.readlines()
+        classes_data = [line.strip() for line in content]
+    selected_classes = get_classes(classes_data, args.n_way) if classes_file else None
     train_dataset, _, test_dataset, _, train_labels, test_labels = get_dataset(dataset_name=dataset_name, 
                                                                     dataset_path=dataset_path,
                                                                     augment_both_views=augment_both,
-                                                                    batch_size=batch_size, test=True)
+                                                                    batch_size=batch_size, test=True,
+                                                                    classes=selected_classes)
     train_loader = DataLoader(
         train_dataset,
         batch_size=batch_size,
@@ -156,29 +184,17 @@ if __name__ == '__main__':
     nscl_model = deepcopy(ssl_model)
     nscl_model.encoder.remove_hook()
     nscl_model.encoder._register_hook()
-    # # deepcopy SCL model
-    # scl_model = deepcopy(ssl_model)
-    # scl_model.encoder.remove_hook()
-    # scl_model.encoder._register_hook()
-    # # deepcopy CE model
-    # ce_model_arch = deepcopy(ssl_model)
-    # ce_model_arch.encoder.remove_hook()
-    # ce_model_arch.encoder._register_hook()
-    # ce_model = SimCLRWithClassificationHead(
-    #     simclr_model=ce_model_arch,
-    #     num_classes=num_output_classes
-    # )
-    
+   
     # load model checkpoint
-    checkpoints_dir = f'{args.ckpt_path}/dcl'
+    checkpoints_dir = f'{args.ckpt_path}/{args.n_way}_way/dcl/'
     print(f"Loading checkpoints from {checkpoints_dir}")
     # load SSL model
     checkpoint_files = os.listdir(checkpoints_dir)
     sorted_checkpoints = sorted(checkpoint_files, key=lambda x: int(x.split('_')[-1].split('.')[0]))
 
     # Output logging
-    train_log_file, train_df = initialize_logging(args.output_path, mode='train')
-    test_log_file, test_df = initialize_logging(args.output_path, mode='test')
+    train_log_file, train_df = initialize_logging(f'{args.output_path}/{args.n_way}_way', mode='train')
+    test_log_file, test_df = initialize_logging(f'{args.output_path}/{args.n_way}_way', mode='test')
 
     def process_model(model_name, ssl_model, device, ckpt_path, epoch):
         """
@@ -213,7 +229,7 @@ if __name__ == '__main__':
         print(f'\nEvaluating Epoch {epoch}')
         features = {}
         for name, model_arch in models_to_evaluate.items():
-            train_feats, test_feats = process_model(name, model_arch, device, args.ckpt_path, epoch)
+            train_feats, test_feats = process_model(name, model_arch, device, f'{args.ckpt_path}/{args.n_way}_way/', epoch)
             if train_feats is not None:
                 features[name] = {'train': train_feats, 'test': test_feats}
         
@@ -226,18 +242,6 @@ if __name__ == '__main__':
             nscl_test_rsa_score = compute_rsa(features['dcl']['test'], features['nscl']['test'],
                                         model_name1='dcl', model_name2='nscl',
                                         embed_layer=emb_layer, device=device)
-            # scl_train_rsa_score = compute_rsa(features['dcl']['train'], features['scl']['train'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # scl_test_rsa_score = compute_rsa(features['dcl']['test'], features['scl']['test'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_train_rsa_score = compute_rsa(features['dcl']['train'], features['ce']['train'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_test_rsa_score = compute_rsa(features['dcl']['test'], features['ce']['test'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
             print("\n--- RSA Computation Complete ---")
         if CKA:
             # --- CKA Execution ---
@@ -248,19 +252,6 @@ if __name__ == '__main__':
             nscl_test_cka_score = compute_cka(features['dcl']['test'], features['nscl']['test'],
                                         model_name1='dcl', model_name2='nscl',
                                         embed_layer=emb_layer, device=device)
-            # scl_train_cka_score = compute_cka(features['dcl']['train'], features['scl']['train'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # scl_test_cka_score = compute_cka(features['dcl']['test'], features['scl']['test'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_train_cka_score = compute_cka(features['dcl']['train'], features['ce']['train'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_test_cka_score = compute_cka(features['dcl']['test'], features['ce']['test'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
-
             print("\n--- CKA Computation Complete ---")
         
         # log results
@@ -268,20 +259,12 @@ if __name__ == '__main__':
             'Epoch': epoch,
             'NSCL_RSA': nscl_train_rsa_score if RSA else None,
             'NSCL_CKA': nscl_train_cka_score if CKA else None,
-            # 'SCL_RSA': scl_train_rsa_score if RSA else None,
-            # 'SCL_CKA': scl_train_cka_score if CKA else None,
-            # 'CE_RSA': ce_train_rsa_score if RSA else None,
-            # 'CE_CKA': ce_train_cka_score if CKA else None,
         }
         train_df = pd.concat([train_df, pd.DataFrame([train_new_entry])], ignore_index=True)
         test_new_entry = {
             'Epoch': epoch,
             'NSCL_RSA': nscl_test_rsa_score if RSA else None,
             'NSCL_CKA': nscl_test_cka_score if CKA else None,
-            # 'SCL_RSA': scl_test_rsa_score if RSA else None,
-            # 'SCL_CKA': scl_test_cka_score if CKA else None,
-            # 'CE_RSA': ce_test_rsa_score if RSA else None,
-            # 'CE_CKA': ce_test_cka_score if CKA else None,
         }
         test_df = pd.concat([test_df, pd.DataFrame([test_new_entry])], ignore_index=True)
     train_df = train_df.sort_values(by='Epoch')

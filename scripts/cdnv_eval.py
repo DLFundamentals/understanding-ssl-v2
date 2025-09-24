@@ -1,13 +1,16 @@
+"""
+How to run?
+python cdnv_eval.py --config configs/cifar10_resnet50.yaml \
+    --ckpt_path checkpoints/cifar10_parallel \
+    --output_path results/cifar10 \
+    --supervision dcl # dcl/nscl/scl/ce
+"""
+
 import torch
-import torch.nn.functional as F
-from torch.utils.data import DataLoader
-import numpy as np
-from copy import deepcopy
 torch.set_default_dtype(torch.float32)
 
 import torchvision.models as models
 import sys, os, argparse, yaml, pandas as pd
-from tqdm import tqdm
 
 # Append the parent directory for utility modules.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,7 +18,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import utility functions and models.
 from data_utils.dataloaders import get_dataset
 from eval_utils.feature_extractor import FeatureExtractor
-from eval_utils.nccc_utils import NCCCEvaluator
+from eval_utils.geometry import GeometricEvaluator
 from models.simclr import SimCLR, SimCLRWithClassificationHead
 
 def set_seed(seed=42):
@@ -68,7 +71,6 @@ if __name__ == '__main__':
 
     batch_size = config['training']['batch_size']
     augment_both = config['training']['augment_both']
-    
 
     encoder_type = config['model']['encoder_type']
     width_multiplier = config['model']['width_multiplier']
@@ -116,7 +118,7 @@ if __name__ == '__main__':
                         )
     else:
         raise NotImplementedError(f"{method_type} not implemented")
-    
+
     if args.supervision == 'ce':
         model = SimCLRWithClassificationHead(
             simclr_model=model,
@@ -127,13 +129,13 @@ if __name__ == '__main__':
     checkpoints_dir = f'{args.ckpt_path}/{args.supervision}'
     print(f"Loading checkpoints from {checkpoints_dir}")
     checkpoint_files = os.listdir(checkpoints_dir)
-    sorted_checkpoints = sorted(checkpoint_files, key=lambda x: int(x.split('_')[-1].split('.')[0]), reverse=True)
+    sorted_checkpoints = sorted(checkpoint_files, key=lambda x: int(x.split('_')[-1].split('.')[0]))
 
     # Output logging
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    log_file = os.path.join(args.output_path, f'{args.supervision}_nccc.csv')
-    log_columns = ['Epoch', 'NCCC Train', 'NCCC Test']
+    log_file = os.path.join(args.output_path, f'{args.supervision}_geom.csv')
+    log_columns = ['Epoch', 'CDNV Train' 'CDNV Test', 'd-CDNV Train', 'd-CDNV Test']
     if not os.path.exists(log_file):
         df = pd.DataFrame(columns=log_columns)
         df.to_csv(log_file, index=False)
@@ -157,22 +159,22 @@ if __name__ == '__main__':
         train_features, train_labels = extractor.extract_features(train_loader)
         test_features, test_labels = extractor.extract_features(test_loader)
 
-        # NCCC Evaluation
-        evaluator = NCCCEvaluator(device=device)
-        centers, selected_classes = evaluator.compute_class_centers(
-            train_features[emb_layer], train_labels,
-            repeat=1
-        )
-        train_accs = evaluator.evaluate(train_features[emb_layer], train_labels, centers, selected_classes)
-        test_accs = evaluator.evaluate(test_features[emb_layer], test_labels, centers, selected_classes)
-        print(f"NCCC Train Accuracy: {np.mean(train_accs)*100:.2f}")
-        print(f"NCCC Test Accuracy: {np.mean(test_accs)*100:.2f}")
+        # --- Evaluation ---
+        evaluator = GeometricEvaluator(num_output_classes)
+        train_cdnv = evaluator.compute_cdnv(train_features[emb_layer], train_labels)
+        test_cdnv = evaluator.compute_cdnv(test_features[emb_layer], test_labels)
+        print(f"CDNV Train: {train_cdnv:.4f}, CDNV Test: {test_cdnv:.4f}")
+        train_dir_cdnv = evaluator.compute_directional_cdnv(train_features[emb_layer], train_labels)
+        test_dir_cdnv = evaluator.compute_directional_cdnv(test_features[emb_layer], test_labels)
+        print(f"d-CDNV Train: {train_dir_cdnv:.4f}, d-CDNV Test: {test_dir_cdnv:.4f}")
 
-        # log results
+        # --- Logging ---
         new_entry = {
             'Epoch': epoch,
-            'NCCC Train': np.mean(train_accs)*100,
-            'NCCC Test': np.mean(test_accs)*100
+            'CDNV Train': train_cdnv,
+            'CDNV Test': test_cdnv,
+            'd-CDNV Train': train_dir_cdnv,
+            'd-CDNV Test': test_dir_cdnv
         }
         df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
     df = df.sort_values(by='Epoch')

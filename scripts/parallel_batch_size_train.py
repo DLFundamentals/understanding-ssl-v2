@@ -19,7 +19,6 @@ import wandb
 import yaml, argparse
 from tqdm import tqdm
 from collections import namedtuple, defaultdict
-import numpy as np
 import torch
 # distributed training
 import torch.distributed as dist
@@ -331,7 +330,8 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(description='SimCLR Training')
     parser.add_argument('--config', '-c', required=True, help='path to yaml config file')
-    parser.add_argument('--n_way', type=int, required=True, help='number of classes used for training')
+    parser.add_argument('--batch_size', '-b', type=int, required=True, help='batch size for training')
+    parser.add_argument('--lr_order', type=str, default="linear", help='learning rate scaling order: linear, sqrt, or constant')
     args = parser.parse_args()
 
     # load config file
@@ -347,7 +347,6 @@ if __name__ == "__main__":
     dataset_path = config['dataset']['path']
     num_output_classes = config['dataset']['num_output_classes']
     
-    batch_size = config['training']['batch_size']
     epochs = config['training']['num_epochs']
     lr = config['training']['lr']
     augmentations_type = config['training']['augmentations_type'] # imagenet or cifar or other dataset name
@@ -370,14 +369,14 @@ if __name__ == "__main__":
     perform_cka = config['evaluation']['perform_cka']
     perform_cdnv = config['evaluation']['perform_cdnv']
     perform_nccc = config['evaluation']['perform_nccc']
-    checkpoints_dir = f'{config['evaluation']['checkpoints_dir']}/{args.n_way}_way'
+    checkpoints_dir = config['evaluation']['checkpoints_dir']
 
     # set device
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     ddp_setup()
 
     Settings = namedtuple("Settings", ["batch_size", "device", "num_output_classes"])
-    settings = Settings(batch_size=batch_size, 
+    settings = Settings(batch_size=args.batch_size, 
                         device=device,
                         num_output_classes=num_output_classes)
 
@@ -387,7 +386,7 @@ if __name__ == "__main__":
             config = {
                 "experiment_name": experiment_name,
                 "dataset_name": dataset_name,
-                "batch_size": batch_size,
+                "batch_size": args.batch_size,
                 "lr": lr,
                 "augment_both": augment_both,
                 "world_size": world_size,
@@ -400,18 +399,13 @@ if __name__ == "__main__":
         )
     
     # load dataset
-    print(f"Dataset: {dataset_name}, N-way: {args.n_way}")
-    selected_classes = np.random.choice(num_output_classes, size=args.n_way, replace=False)
-    class_info_file = f'./results/{dataset_name}/class_info.txt'
-    with open(class_info_file, 'a') as f:
-        f.write(f'N = {args.n_way}; Classes = {selected_classes} \n')
+    print(f"Dataset: {dataset_name}")
     _, train_loader, _, test_loader, _, _ = get_dataset(dataset_name=dataset_name, 
                                     dataset_path=dataset_path,
                                     augment_both_views=augment_both,
-                                    batch_size=batch_size, multi_gpu=multi_gpu,
-                                    world_size=world_size, supervision=supervision, # sample with NSCL strategies
-                                    test=True,
-                                    classes=selected_classes)
+                                    batch_size=args.batch_size, multi_gpu=multi_gpu,
+                                    world_size=world_size, supervision='SCL', # sample with NSCL strategies
+                                    test=True)
     # define model
     if encoder_type == 'resnet50':
         encoder = models.resnet50(weights=None)
@@ -426,11 +420,24 @@ if __name__ == "__main__":
         )
     else:
         raise NotImplementedError(f"{encoder_type} not implemented")
+ 
+    # Calculate effective learning rate
+    if args.lr_order == "linear":
+        effective_lr = lr * world_size * (args.batch_size / 256)
+    elif args.lr_order == "sqrt":
+        effective_lr = lr * (world_size * (args.batch_size**0.5 / 256))
+    elif args.lr_order == 'sqrt_4':
+        effective_lr = lr * (world_size * (args.batch_size**0.25 / 256))
+    elif args.lr_order == "constant":
+        effective_lr = lr
+    else:
+        raise ValueError(f"Invalid lr_order: {args.lr_order}. Choose from 'linear', 'sqrt', 'sqrt_4', or 'constant'.")
     
+    checkpoints_dir = os.path.join(checkpoints_dir, f'{args.lr_order}/batch{args.batch_size}')
+    print(f"Effective Learning Rate: {effective_lr}")
+    print(f"Checkpoints Directory: {checkpoints_dir}")
+
     if method_type == 'simclr':
-        # Calculate effective learning rate
-        effective_lr = lr * world_size * (batch_size / 256)
-        
         # Create ALL model configurations
         model_configs = generate_model_configs(
             encoder=encoder,

@@ -15,7 +15,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Import utility functions and models.
 from data_utils.dataloaders import get_dataset
 from eval_utils.feature_extractor import FeatureExtractor
-from eval_utils.nccc_utils import NCCCEvaluator
+from eval_utils.linear_probe_utils import LinearProbeEvaluator
 from models.simclr import SimCLR, SimCLRWithClassificationHead
 
 def set_seed(seed=42):
@@ -132,8 +132,8 @@ if __name__ == '__main__':
     # Output logging
     if not os.path.exists(args.output_path):
         os.makedirs(args.output_path)
-    log_file = os.path.join(args.output_path, f'{args.supervision}_nccc.csv')
-    log_columns = ['Epoch', 'NCCC Train', 'NCCC Test']
+    log_file = os.path.join(args.output_path, f'{args.supervision}_lp.csv')
+    log_columns = ['Epoch', 'LP Train', 'LP Test']
     if not os.path.exists(log_file):
         df = pd.DataFrame(columns=log_columns)
         df.to_csv(log_file, index=False)
@@ -142,7 +142,8 @@ if __name__ == '__main__':
 
     for ssl_ckpt in sorted_checkpoints:
         epoch = int(ssl_ckpt.split('_')[-1].split('.')[0])
-        if epoch in df['Epoch'].values:
+        epochs_to_eval = 1000
+        if epoch in df['Epoch'].values or epoch!=epochs_to_eval: 
             print(f"Epoch {epoch} already evaluated. Skipping.")
             continue
         print(f'\nEvaluating Epoch {epoch}')
@@ -157,22 +158,20 @@ if __name__ == '__main__':
         train_features, train_labels = extractor.extract_features(train_loader)
         test_features, test_labels = extractor.extract_features(test_loader)
 
-        # NCCC Evaluation
-        evaluator = NCCCEvaluator(device=device)
-        centers, selected_classes = evaluator.compute_class_centers(
+        # LP Evaluation
+        evaluator = LinearProbeEvaluator(
             train_features[emb_layer], train_labels,
-            repeat=1
+            test_features[emb_layer], test_labels,
+            num_output_classes
         )
-        train_accs = evaluator.evaluate(train_features[emb_layer], train_labels, centers, selected_classes)
-        test_accs = evaluator.evaluate(test_features[emb_layer], test_labels, centers, selected_classes)
-        print(f"NCCC Train Accuracy: {np.mean(train_accs)*100:.2f}")
-        print(f"NCCC Test Accuracy: {np.mean(test_accs)*100:.2f}")
-
+        train_acc, test_acc = evaluator.evaluate(repeat=1)
+        print(f"LP Train Accuracy: {np.mean(train_acc)*100:.2f}")
+        print(f"LP Test Accuracy: {np.mean(test_acc)*100:.2f}")
         # log results
         new_entry = {
             'Epoch': epoch,
-            'NCCC Train': np.mean(train_accs)*100,
-            'NCCC Test': np.mean(test_accs)*100
+            'NCCC Train': np.mean(train_acc)*100,
+            'NCCC Test': np.mean(test_acc)*100
         }
         df = pd.concat([df, pd.DataFrame([new_entry])], ignore_index=True)
     df = df.sort_values(by='Epoch')
