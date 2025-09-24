@@ -41,7 +41,7 @@ def list_sorted_snapshots(folder: str):
 
 def frobenius_norm(w_cl, w_sup):
     num = torch.norm(w_cl - w_sup, p='fro')
-    denom = torch.norm(w_cl, p='fro') * torch.norm(w_sup, p='fro')
+    denom = 0.5 * (torch.norm(w_cl, p='fro') + torch.norm(w_sup, p='fro'))
     if denom == 0:
         return None
     
@@ -68,7 +68,7 @@ if __name__ == "__main__":
     parser.add_argument('--checkpoints_dir', type=str, 
                        help='Path to checkpoints directory')
     parser.add_argument('--compare', nargs='+', default=['scl', 'nscl'],
-                        choices=['scl', 'nscl'],
+                        choices=['scl', 'nscl', 'ce'],
                         help='Methods to compare against DCL.')
     parser.add_argument('--output_file', type=str,
                        help='Path to save CSV results')
