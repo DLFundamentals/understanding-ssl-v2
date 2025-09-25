@@ -142,8 +142,8 @@ if __name__ == '__main__':
 
     for ssl_ckpt in sorted_checkpoints:
         epoch = int(ssl_ckpt.split('_')[-1].split('.')[0])
-        epochs_to_eval = 1000
-        if epoch in df['Epoch'].values or epoch!=epochs_to_eval: 
+        epochs_to_eval = [800,1000,1200,1800,2000,2200,2400]
+        if epoch in df['Epoch'].values or epoch not in epochs_to_eval: 
             print(f"Epoch {epoch} already evaluated. Skipping.")
             continue
         print(f'\nEvaluating Epoch {epoch}')
