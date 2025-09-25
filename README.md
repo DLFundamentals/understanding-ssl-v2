@@ -46,10 +46,12 @@ bash bash/run_n_way_alignment_eval.sh <config-path> <ckpt-path> <output-path> <c
 ```
 
 ## Figure 4: Varying temperature
-To pretrain models with different temperature values, repeat the steps for \href{#pretraining-models-parallelly} and set different temperature values in the config file.
+
+To pretrain models with different temperature values, repeat the steps for [pretraining-models-parallelly]() and set different temperature values in the config file.
 
 ## Figure 5: Varying batch-size and learning rate
-To pretrain models with different batch-size and learning rate values, repeat the steps for \href{#pretraining-models-parallelly} and set different batch-size and learning rate values in the config file.
+
+To pretrain models with different batch-size and learning rate values, repeat the steps for [pretraining-models-parallelly]() and set different batch-size and learning rate values in the config file.
 
 ## Figure 6: Weight-space coupling
 
