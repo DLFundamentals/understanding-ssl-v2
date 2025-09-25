@@ -2,13 +2,6 @@
 
 ## Installation
 
-To get started, follow these steps:
-
-```bash
-git clone https://github.com/DLFundamentals/understanding_ssl_v2.git
-cd understanding_ssl_v2
-```
-
 The packages that we use are straightforward to install. Please run the following command:
 
 ```bash
@@ -18,15 +11,53 @@ conda activate contrastive
 
 ## Pretraining models parallelly
 
-### Distributed Training on Multiple GPUs
-
-Run the following command to train SimCLR on multiple GPUs.
-> **NOTE:** In our experiments, we used 2 GPUs for training. You can adjust the number of GPUs based on your hadrware setup.
+To pretrain models with shared randomness, you can run the following command:
 
 ```bash
-torchrun --nproc_per_node=N_GPUs --standalone scripts/parallel_dcl_nscl_train_simclr.py --config <path-to-yaml-config>
+torchrun --nproc_per_node=1 --standalone scripts/parallel_train_simclr.py \
+--config <path-to-config-file>
 ```
 
-Replace `N_GPUs` with the number of GPUs you want to use and `<path-to-yaml-config>` with the path to your configuration file.
+Note: We provide config files for all the datasets that we used in our work. Please locate them in `configs/` directory.
 
-Please refer to [docs/pretraining](https://github.com/DLFundamentals/understanding-ssl/blob/main/docs/pretraining.md) for more details.
+## Figure 2: RSA/CKA alignment during training
+
+To get RSA/CKA values for train and test dataset with all four models (CL, NSCL, SCL, and CE), run:
+
+```bash
+python scripts/alignment_eval.py \
+    --config <path-to-config-file> \
+    --ckpt_path <path-to-all-checkpoints-directory> \
+    --output_path <path-to-save-metrics>
+```
+
+## Figure 3: N-way RSA/CKA analysis
+
+First, we need to pre-train models with shared randomness on the desired dataset. After that, to get N-way RSA/CKA values for train and test dataset with all four models (CL, NSCL, SCL, and CE), run:
+
+```bash
+bash bash/run_n_way_training.sh <config-path> <dataset-name>
+```
+
+After pretraining, to evaluate the N-way alignment, run:
+
+```bash
+bash bash/run_n_way_alignment_eval.sh <config-path> <ckpt-path> <output-path> <classes-per-dataset> <dataset-name>
+```
+
+## Figure 4: Varying temperature
+To pretrain models with different temperature values, repeat the steps for \href{#pretraining-models-parallelly} and set different temperature values in the config file.
+
+## Figure 5: Varying batch-size and learning rate
+To pretrain models with different batch-size and learning rate values, repeat the steps for \href{#pretraining-models-parallelly} and set different batch-size and learning rate values in the config file.
+
+## Figure 6: Weight-space coupling
+
+To get average weight gap between different models, run:
+
+```bash
+python scripts/weight_space_coupling.py \
+    --ckpt_path <path-to-all-checkpoints-directory> \
+    --compare <chose between 'cl', 'nscl', 'scl', 'ce> \
+    --output_file <path-to-save-metrics>
+```
