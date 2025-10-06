@@ -409,13 +409,34 @@ if __name__ == "__main__":
     if encoder_type == 'resnet50':
         encoder = models.resnet50(weights=None)
     elif encoder_type == 'vit_b':
+        if dataset_name == 'cifar10' or dataset_name == 'cifar100':
+            PATCH_SIZE = 4
+            IMAGE_SIZE = 32
+            HIDDEN_DIM = 384
+            MLP_DIM = 1536
+            STRIDE = 2
+        elif dataset_name == 'tiny_imagenet':
+            PATCH_SIZE = 8
+            IMAGE_SIZE = 64
+            HIDDEN_DIM = 384
+            MLP_DIM = 1536
+            STRIDE = 4
+        elif dataset_name == 'mini_imagenet' or dataset_name == 'full_imagenet':
+            PATCH_SIZE = 16
+            IMAGE_SIZE = 224
+            HIDDEN_DIM = 768
+            MLP_DIM = 3072
+            STRIDE = 16
+        else:
+            raise NotImplementedError(f"{dataset_name} not implemented for ViT-B/16")
+
         encoder = models.VisionTransformer(
-            patch_size=16 if 'imagenet' in dataset_name else 4,
-            image_size=224 if 'imagenet' in dataset_name else 32,
+            patch_size=PATCH_SIZE,
+            image_size=IMAGE_SIZE,
+            hidden_dim=HIDDEN_DIM,
+            mlp_dim=MLP_DIM,
             num_layers=12,
             num_heads=12,
-            hidden_dim=768 if 'imagenet' in dataset_name else 384,
-            mlp_dim=3072 if 'imagenet' in dataset_name else 1536,
         )
     else:
         raise NotImplementedError(f"{encoder_type} not implemented")
@@ -440,11 +461,11 @@ if __name__ == "__main__":
             hidden_dim=hidden_dim,
             projection_dim=projection_dim,
             track_performance=track_performance,
-            image_size=224 if 'imagenet' in dataset_name else 32,
-            patch_size=16 if 'imagenet' in dataset_name else 4,
-            stride=16 if 'imagenet' in dataset_name else 2,
-            token_hidden_dim=768 if 'imagenet' in dataset_name else 384,
-            mlp_dim=3072 if 'imagenet' in dataset_name else 1536,
+            image_size=IMAGE_SIZE,
+            patch_size=PATCH_SIZE,
+            stride=STRIDE,
+            token_hidden_dim=HIDDEN_DIM,
+            mlp_dim=MLP_DIM,
             checkpoints_dir=checkpoints_dir,
         )
         
