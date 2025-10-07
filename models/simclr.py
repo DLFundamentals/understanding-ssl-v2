@@ -34,8 +34,10 @@ class SimCLR(nn.Module):
         
         # run a mock image tensor to instantiate parameters
         with torch.no_grad():
-            if 'imagenet' in dataset:
+            if dataset == 'full_imagenet' or dataset == 'mini_imagenet':
                 h = self.encoder(torch.randn(1, 3, 224, 224))
+            elif dataset == 'tiny_imagenet':
+                h = self.encoder(torch.randn(1, 3, 64, 64))
             elif 'cifar' in dataset:
                 h = self.encoder(torch.randn(1, 3, 32, 32))
             elif dataset == 'svhn':
