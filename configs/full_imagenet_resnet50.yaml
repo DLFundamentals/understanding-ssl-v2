@@ -1,21 +1,21 @@
-experiment_name: "simclr/cifar100"
+experiment_name: "simclr/full_imagenet"
 method_type: "simclr"
 supervision: "DCL"
 
 dataset:
-  name: "cifar100"
+  name: "full_imagenet"
   path: "./data/"
-  num_output_classes: 100
+  num_output_classes: 1000
 
 training:
   batch_size: 1024
-  num_epochs: 1201
+  num_epochs: 301
   lr: 0.3
-  augmentations_type: "cifar"
+  augmentations_type: "imagenet"
   augment_both: True
   save_every: 100
   log_every: 50
-  track_performance: False
+  track_performance: True
   multi_gpu: False
   world_size: 1
 
@@ -30,7 +30,7 @@ loss:
   temperature: 0.1
 
 evaluation:
-  checkpoints_dir: "checkpoints/cifar100_parallel/"
+  checkpoints_dir: "checkpoints/full_imagenet_parallel/"
   perform_rsa: True
   perform_cka: True
   perform_cdnv: True

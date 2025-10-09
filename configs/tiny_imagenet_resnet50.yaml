@@ -8,14 +8,14 @@ dataset:
   num_output_classes: 200
 
 training:
-  batch_size: 2048
-  num_epochs: 2501
+  batch_size: 1024
+  num_epochs: 1201
   lr: 0.3
   augmentations_type: "tiny_imagenet"
   augment_both: True
-  save_every: 200
+  save_every: 100
   log_every: 50
-  track_performance: True
+  track_performance: False
   multi_gpu: False
   world_size: 1
 
