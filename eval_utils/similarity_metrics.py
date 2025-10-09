@@ -220,7 +220,7 @@ def compute_rsa(features1, features2,
 
     features1 = features1[embed_layer]
     features2 = features2[embed_layer]
-
+    total_samples = features1.shape[0]
     features1_rdm = rsa.compute_rdm(features1, chunk_size=1024)
     features2_rdm = rsa.compute_rdm(features2, chunk_size=1024)
 

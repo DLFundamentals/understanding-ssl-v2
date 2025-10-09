@@ -39,8 +39,8 @@ class LinearProbeEvaluator:
         test_labels: torch.Tensor,
         num_output_classes: int,
         device: str = "cuda",
-        lr: float = 3e-4,
-        epochs: int = 100,
+        lr: float = 3e-3,
+        epochs: int = 300,
         selected_classes: Optional[List[int]] = None,
     ):
         self.device = device
