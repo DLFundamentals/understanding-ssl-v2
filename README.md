@@ -90,7 +90,9 @@ We study various factors such as #classes ($C$), temperature ($\tau$), and batch
 ## Parameters alignment evaluation aka weight-space coupling
 
 To study alignment at a parameter-level, we find Frobenius norm between weights of two models layer-wise and report the following:
-$$\sum_l\frac{\| w_{CL}^l - W_{\text{sup}}^l\|_F}{0.5\,(\|w_{CL}^l\|_F + \|w_{\text{sup}}^l\|_F)}$$
+<p align="center">
+  <img src="https://latex.codecogs.com/svg.image?\color{blue}\sum_l\frac{\|w_{CL}^l-W_{\text{sup}}^l\|_F}{0.5(\|w_{CL}^l\|_F+\|w_{\text{sup}}^l\|_F)}" alt="weight difference formula"/>
+</p>
 
 where $w_{CL}^l$ and $w_{\text{sup}}^l$ are weights corresponding to $l^{\text{th}}$ layer of self-supervised and supervised models respectively, and $\|\cdot \|_F$ denotes Frobenius norm.
 
