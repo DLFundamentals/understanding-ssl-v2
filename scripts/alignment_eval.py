@@ -156,18 +156,18 @@ if __name__ == '__main__':
     nscl_model = deepcopy(ssl_model)
     nscl_model.encoder.remove_hook()
     nscl_model.encoder._register_hook()
-    # # deepcopy SCL model
-    # scl_model = deepcopy(ssl_model)
-    # scl_model.encoder.remove_hook()
-    # scl_model.encoder._register_hook()
-    # # deepcopy CE model
-    # ce_model_arch = deepcopy(ssl_model)
-    # ce_model_arch.encoder.remove_hook()
-    # ce_model_arch.encoder._register_hook()
-    # ce_model = SimCLRWithClassificationHead(
-    #     simclr_model=ce_model_arch,
-    #     num_classes=num_output_classes
-    # )
+    # deepcopy SCL model
+    scl_model = deepcopy(ssl_model)
+    scl_model.encoder.remove_hook()
+    scl_model.encoder._register_hook()
+    # deepcopy CE model
+    ce_model_arch = deepcopy(ssl_model)
+    ce_model_arch.encoder.remove_hook()
+    ce_model_arch.encoder._register_hook()
+    ce_model = SimCLRWithClassificationHead(
+        simclr_model=ce_model_arch,
+        num_classes=num_output_classes
+    )
     
     # load model checkpoint
     checkpoints_dir = f'{args.ckpt_path}/dcl'
@@ -201,8 +201,8 @@ if __name__ == '__main__':
     models_to_evaluate = {
         'dcl': ssl_model,
         'nscl': nscl_model,
-        # 'scl': scl_model,
-        # 'ce': ce_model
+        'scl': scl_model,
+        'ce': ce_model
     }
 
     for ssl_ckpt in sorted_checkpoints:
@@ -226,18 +226,18 @@ if __name__ == '__main__':
             nscl_test_rsa_score = compute_rsa(features['dcl']['test'], features['nscl']['test'],
                                         model_name1='dcl', model_name2='nscl',
                                         embed_layer=emb_layer, device=device)
-            # scl_train_rsa_score = compute_rsa(features['dcl']['train'], features['scl']['train'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # scl_test_rsa_score = compute_rsa(features['dcl']['test'], features['scl']['test'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_train_rsa_score = compute_rsa(features['dcl']['train'], features['ce']['train'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_test_rsa_score = compute_rsa(features['dcl']['test'], features['ce']['test'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
+            scl_train_rsa_score = compute_rsa(features['dcl']['train'], features['scl']['train'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            scl_test_rsa_score = compute_rsa(features['dcl']['test'], features['scl']['test'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            ce_train_rsa_score = compute_rsa(features['dcl']['train'], features['ce']['train'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
+            ce_test_rsa_score = compute_rsa(features['dcl']['test'], features['ce']['test'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
             print("\n--- RSA Computation Complete ---")
         if CKA:
             # --- CKA Execution ---
@@ -248,18 +248,18 @@ if __name__ == '__main__':
             nscl_test_cka_score = compute_cka(features['dcl']['test'], features['nscl']['test'],
                                         model_name1='dcl', model_name2='nscl',
                                         embed_layer=emb_layer, device=device)
-            # scl_train_cka_score = compute_cka(features['dcl']['train'], features['scl']['train'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # scl_test_cka_score = compute_cka(features['dcl']['test'], features['scl']['test'],
-            #                             model_name1='dcl', model_name2='scl',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_train_cka_score = compute_cka(features['dcl']['train'], features['ce']['train'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
-            # ce_test_cka_score = compute_cka(features['dcl']['test'], features['ce']['test'],
-            #                             model_name1='dcl', model_name2='ce',
-            #                             embed_layer=emb_layer, device=device)
+            scl_train_cka_score = compute_cka(features['dcl']['train'], features['scl']['train'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            scl_test_cka_score = compute_cka(features['dcl']['test'], features['scl']['test'],
+                                        model_name1='dcl', model_name2='scl',
+                                        embed_layer=emb_layer, device=device)
+            ce_train_cka_score = compute_cka(features['dcl']['train'], features['ce']['train'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
+            ce_test_cka_score = compute_cka(features['dcl']['test'], features['ce']['test'],
+                                        model_name1='dcl', model_name2='ce',
+                                        embed_layer=emb_layer, device=device)
 
             print("\n--- CKA Computation Complete ---")
         
@@ -268,20 +268,20 @@ if __name__ == '__main__':
             'Epoch': epoch,
             'NSCL_RSA': nscl_train_rsa_score if RSA else None,
             'NSCL_CKA': nscl_train_cka_score if CKA else None,
-            # 'SCL_RSA': scl_train_rsa_score if RSA else None,
-            # 'SCL_CKA': scl_train_cka_score if CKA else None,
-            # 'CE_RSA': ce_train_rsa_score if RSA else None,
-            # 'CE_CKA': ce_train_cka_score if CKA else None,
+            'SCL_RSA': scl_train_rsa_score if RSA else None,
+            'SCL_CKA': scl_train_cka_score if CKA else None,
+            'CE_RSA': ce_train_rsa_score if RSA else None,
+            'CE_CKA': ce_train_cka_score if CKA else None,
         }
         train_df = pd.concat([train_df, pd.DataFrame([train_new_entry])], ignore_index=True)
         test_new_entry = {
             'Epoch': epoch,
             'NSCL_RSA': nscl_test_rsa_score if RSA else None,
             'NSCL_CKA': nscl_test_cka_score if CKA else None,
-            # 'SCL_RSA': scl_test_rsa_score if RSA else None,
-            # 'SCL_CKA': scl_test_cka_score if CKA else None,
-            # 'CE_RSA': ce_test_rsa_score if RSA else None,
-            # 'CE_CKA': ce_test_cka_score if CKA else None,
+            'SCL_RSA': scl_test_rsa_score if RSA else None,
+            'SCL_CKA': scl_test_cka_score if CKA else None,
+            'CE_RSA': ce_test_rsa_score if RSA else None,
+            'CE_CKA': ce_test_cka_score if CKA else None,
         }
         test_df = pd.concat([test_df, pd.DataFrame([test_new_entry])], ignore_index=True)
     train_df = train_df.sort_values(by='Epoch')
