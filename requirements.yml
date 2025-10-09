@@ -1,4 +1,4 @@
-name: contrastive
+name: alignment
 channels:
     - conda-forge
 dependencies:
