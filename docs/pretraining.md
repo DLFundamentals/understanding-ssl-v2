@@ -1,20 +1,14 @@
 # SSL Pretraining
 
-## Training on Single GPU
-
-Run the following command to train SimCLR on single GPU.
-
-```bash
-python scripts/train.py --config <path-to-yaml-config>
-```
+This document is borrowed from our [previous project](https://github.com/DLFundamentals/understanding-ssl/).
 
 ## Distributed Training on Multiple GPUs
 
 Run the following command to train SimCLR on multiple GPUs.
-> **NOTE:** In our experiments, we used 2 GPUs for training. You can adjust the number of GPUs based on your hadrware setup.
 
 ```bash
-torchrun --nproc_per_node=N_GPUs --standalone scripts/multigpu_train_simclr.py --config <path-to-yaml-config>
+torchrun --nproc_per_node=N_GPUs --standalone scripts/parallel_train_simclr.py \
+--config <path-to-config-file>
 ```
 
 Replace `N_GPUs` with the number of GPUs you want to use and `<path-to-yaml-config>` with the path to your configuration file.
