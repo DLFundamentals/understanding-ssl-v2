@@ -60,7 +60,7 @@ torchrun --nproc_per_node=N_GPUs --standalone scripts/parallel_train_simclr.py \
 
 Replace `N_GPUs` with the number of GPUs you want to use and `<path-to-yaml-config>` with the path to your configuration file.
 
-Please refer to [docs/pretraining](https://github.com/DLFundamentals/understanding-ssl/blob/main/docs/pretraining.md) for more details.
+Please refer to [docs/pretraining](docs/pretraining.md) for more details.
 
 ## Representation alignment evaluation
 
@@ -85,10 +85,14 @@ python scripts/alignment_eval.py \
 
 This shall generate two files at the end of a successful run: `train_alignment.csv` and `test_alignment.csv` with RSA and CKA values for provided models in `--ckpt_path` directory. You can analyse the alignment metrics during training and conclude which supervised method aligns the most with contrastive learning! (It's NSCL 👀)
 
-We study various factors such as #classes ($C$), temperature ($\tau$), and batch-size ($B$) that affect alignment between CL and NSCL models. Please refer to [docs/evaluation](https://github.com/DLFundamentals/understanding-ssl/blob/main/docs/evaluation.md) scripts for reproducing additional experiments shown in our paper.
+We study various factors such as #classes ($C$), temperature ($\tau$), and batch-size ($B$) that affect alignment between CL and NSCL models. Please refer to [docs/alignment_factors.md](docs/alignment_factors.md) scripts for reproducing additional experiments shown in our paper.
 
 ## Parameters alignment evaluation aka weight-space coupling
 
+To study alignment at a parameter-level, we find Frobenius norm between weights of two models layer-wise and report the following:
+$$\sum_l\frac{\| w_{CL}^l - W_{\text{sup}}^l\|_F}{0.5\,(\|w_{CL}^l\|_F + \|w_{\text{sup}}^l\|_F)}$$
+
+where $w_{CL}^l$ and $w_{\text{sup}}^l$ are weights corresponding to $l^{\text{th}}$ layer of self-supervised and supervised models respectively, and $\|\cdot \|_F$ denotes Frobenius norm.
 
 To get average weight gap between different models, run:
 
@@ -99,39 +103,7 @@ python scripts/weight_space_coupling.py \
     --output_file <path-to-save-metrics>
 ```
 
-## Figure 3: N-way RSA/CKA analysis
-
-First, we need to pre-train models with shared randomness on the desired dataset. After that, to get N-way RSA/CKA values for train and test dataset with all four models (CL, NSCL, SCL, and CE), run:
-
-```bash
-bash bash/run_n_way_training.sh <config-path> <dataset-name>
-```
-
-After pretraining, to evaluate the N-way alignment, run:
-
-```bash
-bash bash/run_n_way_alignment_eval.sh <config-path> <ckpt-path> <output-path> <classes-per-dataset> <dataset-name>
-```
-
-## Figure 4: Varying temperature
-
-To pretrain models with different temperature values, repeat the steps for [pretraining-models-parallelly]() and set different temperature values in the config file.
-
-## Figure 5: Varying batch-size and learning rate
-
-To pretrain models with different batch-size and learning rate values, repeat the steps for [pretraining-models-parallelly]() and set different batch-size and learning rate values in the config file.
-
-## Figure 6: Weight-space coupling
-
-To get average weight gap between different models, run:
-
-```bash
-python scripts/weight_space_coupling.py \
-    --ckpt_path <path-to-all-checkpoints-directory> \
-    --compare <chose between 'cl', 'nscl', 'scl', 'ce> \
-    --output_file <path-to-save-metrics>
-```
-
+Our findings suggest a significant divergence in weight space.
 
 ## 📚 Citation
 
