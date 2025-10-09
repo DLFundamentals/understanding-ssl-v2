@@ -16,8 +16,7 @@ elif [[ $DATASET == "cifar100" || $DATASET == "mini_imagenet" ]]; then
 elif [[ $DATASET == "tiny_imagenet" ]]; then
     N_WAYS=(2 4 6 8 10 50 100)
 elif [[ $DATASET == "full_imagenet" ]]; then
-    # N_WAYS=(5 10 50 100 500 1000)
-    N_WAYS=(10) 
+    N_WAYS=(5 10 50 100 500 1000)
 else
     echo "Invalid dataset option"
     exit 1
