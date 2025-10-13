@@ -1,5 +1,5 @@
 # ON THE ALIGNMENT BETWEEN SELF-SUPERVISED AND SUPERVISED LEARNING
-[Preprint]() | [Project Page](https://dlfundamentals.github.io/cl-nscl-representation-alignment/)
+[Preprint](https://arxiv.org/pdf/2510.08852) | [Project Page](https://dlfundamentals.github.io/cl-nscl-representation-alignment/)
 
 In this work we make progress towards addressing the following question:
 
